@@ -1,0 +1,7 @@
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/fluidlite/CMakeFiles/install.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/fluidlite/CMakeFiles/list_install_components.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/fluidlite/CMakeFiles/rebuild_cache.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/fluidlite/CMakeFiles/install/strip.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/fluidlite/CMakeFiles/install/local.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/fluidlite/CMakeFiles/fluidlite.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/fluidlite/CMakeFiles/edit_cache.dir

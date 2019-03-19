@@ -1,0 +1,14 @@
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/libfluidlite.a
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidlite.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/types.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/settings.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/synth.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/sfont.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/ramsfont.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/log.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/misc.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/mod.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/gen.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/voice.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/fluidsynth/version.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/pkgconfig/fluidlite.pc

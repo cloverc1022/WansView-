@@ -1,0 +1,10 @@
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/aom/aom.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/aom/aom_codec.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/aom/aom_frame_buffer.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/aom/aom_image.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/aom/aom_integer.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/aom/aom.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/aom/aom_decoder.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/aom/aomdx.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/pkgconfig/aom.pc
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/libaom.a

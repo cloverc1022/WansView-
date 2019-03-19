@@ -511,7 +511,7 @@ static void FillSwapChainDesc(vout_display_t *vd, DXGI_SWAP_CHAIN_DESC1 *out)
         FreeLibrary(hKernelBase);
     }
     if (isWin10OrGreater)
-        out->SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        out->SwapEffect = 3;	//DXGI_SWAP_EFFECT_FLIP_DISCARD;
     else
     {
         bool isWin81OrGreater = false;
@@ -519,10 +519,10 @@ static void FillSwapChainDesc(vout_display_t *vd, DXGI_SWAP_CHAIN_DESC1 *out)
         if (likely(hKernel32 != NULL))
             isWin81OrGreater = GetProcAddress(hKernel32, "IsProcessCritical") != NULL;
         if (isWin81OrGreater)
-            out->SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+            out->SwapEffect = 2;	//DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
         else
         {
-            out->SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+            out->SwapEffect = 0;	//DXGI_SWAP_EFFECT_DISCARD;
             out->BufferCount = 1;
         }
     }

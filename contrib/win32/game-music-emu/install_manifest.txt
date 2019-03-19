@@ -1,0 +1,3 @@
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/libgme.a
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/gme/gme.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/pkgconfig/libgme.pc

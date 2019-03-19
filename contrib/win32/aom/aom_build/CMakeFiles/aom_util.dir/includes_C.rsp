@@ -1,0 +1,1 @@
+-I/home/mamengchao/vlc/vlc-3.0/contrib/win32/aom -I/home/mamengchao/vlc/vlc-3.0/contrib/win32/aom/aom_build -I/home/mamengchao/vlc/vlc-3.0/contrib/win32/aom/apps -I/home/mamengchao/vlc/vlc-3.0/contrib/win32/aom/common -I/home/mamengchao/vlc/vlc-3.0/contrib/win32/aom/examples -I/home/mamengchao/vlc/vlc-3.0/contrib/win32/aom/stats 

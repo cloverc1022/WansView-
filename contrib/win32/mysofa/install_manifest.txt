@@ -1,0 +1,3 @@
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/share/libmysofa/default.sofa
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/libmysofa.a
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/mysofa.h

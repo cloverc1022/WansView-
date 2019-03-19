@@ -1,0 +1,8 @@
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/openjpeg-2.3/OpenJPEGTargets.cmake
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/openjpeg-2.3/OpenJPEGTargets-noconfig.cmake
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/openjpeg-2.3/OpenJPEGConfig.cmake
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/pkgconfig/libopenjp2.pc
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/openjpeg-2.3/opj_config.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/libopenjp2.a
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/openjpeg-2.3/openjpeg.h
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/openjpeg-2.3/opj_stdint.h

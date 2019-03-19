@@ -1,0 +1,10 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/aom/aom_build/gen_src/aom_dsp_common_sse2_dummy.c
+
