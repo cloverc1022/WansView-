@@ -2195,6 +2195,9 @@ LIBVLC_API int libvlc_media_player_record_start( libvlc_media_player_t *p_mi, co
  * \version LibVLC 2.1.0 or later
  */
 LIBVLC_API int libvlc_media_player_record_stop( libvlc_media_player_t *p_mi );
+
+LIBVLC_API int libvlc_media_player_get_stats( libvlc_media_player_t *p_mi,
+                                              void *p_stats );
 /** @} media_player */
 
 # ifdef __cplusplus

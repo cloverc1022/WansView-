@@ -282,6 +282,9 @@ static void TaskInterruptRTSP( void * );
 
 static void TimeoutPrevention( void * );
 
+static void continueAfterGET_PARAMETER(RTSPClient * rtspClient, int resultCode, char * resultString);
+static bool wait_Live555_response( demux_t *p_demux, int i_timeout);
+
 static unsigned char* parseH264ConfigStr( char const* configStr,
                                           unsigned int& configSize );
 static unsigned char* parseVorbisConfigStr( char const* configStr,
@@ -2144,12 +2147,13 @@ static void StreamRead( void *p_private, unsigned int i_size,
                 switch( tk->fmt.i_codec )
                 {
                     case VLC_CODEC_MPGV:
-                    case VLC_CODEC_H264:
-                    case VLC_CODEC_HEVC:
-                        p_block->i_dts = dtsgen_GetDTS( &tk->dtsgen );
-                        dtsgen_Debug( VLC_OBJECT(p_demux), &tk->dtsgen, p_block->i_dts, p_block->i_pts );
-                        break;
                     case VLC_CODEC_VP8:
+                        p_block->i_dts = VLC_TS_INVALID;
+                        break;
+                    case VLC_CODEC_HEVC:
+                    case VLC_CODEC_H264:
+                        p_block->i_dts = VLC_TS_0 + i_pts;
+                        break;
                     default:
                         p_block->i_dts = VLC_TS_0 + i_pts;
                         break;

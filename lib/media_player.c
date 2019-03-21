@@ -2186,3 +2186,13 @@ static int file_recording_finished(vlc_object_t *p_this, char const *psz_cmd,
     libvlc_event_send(&p_mi->event_manager, &event);
     return VLC_SUCCESS;
 }
+
+int libvlc_media_player_get_stats( libvlc_media_player_t *p_mi, void *p_stats )
+{
+    if (!p_mi)
+        return false;
+    if (!p_mi->p_md)
+        return false;
+    
+    return libvlc_media_get_stats(p_mi->p_md, (libvlc_media_stats_t *)p_stats);
+}
