@@ -1603,7 +1603,7 @@ vlc_module_begin ()
     add_string( "snapshot-format", "png", SNAP_FORMAT_TEXT,
                    SNAP_FORMAT_LONGTEXT, false )
         change_string_list( ppsz_snap_formats, ppsz_snap_formats )
-    add_bool( "snapshot-preview", true, SNAP_PREVIEW_TEXT,
+    add_bool( "snapshot-preview", false, SNAP_PREVIEW_TEXT,
               SNAP_PREVIEW_LONGTEXT, false )
     add_bool( "snapshot-sequential", false, SNAP_SEQUENTIAL_TEXT,
               SNAP_SEQUENTIAL_LONGTEXT, false )
