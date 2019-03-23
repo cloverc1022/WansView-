@@ -37,6 +37,8 @@
 #include "aout_internal.h"
 #include "libvlc.h"
 
+unsigned int g_audio_sample_rate = 0;/*用于app获取正确的采样率*/
+
 /**
  * Creates an audio output
  */
@@ -88,6 +90,7 @@ int aout_DecNew( audio_output_t *p_aout,
                 &(vlc_value_t) { .i_int = owner->initial_stereo_mode }, NULL);
 
     owner->filters_cfg = AOUT_FILTERS_CFG_INIT;
+    g_audio_sample_rate = owner->mixer_format.i_rate;/*app获取音频采样率*/
     if (aout_OutputNew (p_aout, &owner->mixer_format, &owner->filters_cfg))
         goto error;
     aout_volume_SetFormat (owner->volume, owner->mixer_format.i_format);
@@ -124,6 +127,8 @@ error:
 void aout_DecDelete (audio_output_t *aout)
 {
     aout_owner_t *owner = aout_owner (aout);
+
+    g_audio_sample_rate = 0;/*stop时置0,便于app进行播放状态判断*/
 
     aout_OutputLock (aout);
     if (owner->mixer_format.i_format)

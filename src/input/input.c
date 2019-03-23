@@ -2421,7 +2421,21 @@ static bool Control( input_thread_t *p_input,
         case INPUT_CONTROL_NAV_MENU:
             ControlNav( p_input, i_type );
             break;
+        case INPUT_CONTROL_SET_BID:
+            demux_Control( input_priv(p_input)->master->p_demux, DEMUX_SET_BID, val.p_address);
+            break;
 
+        case INPUT_CONTROL_SET_PARAMETER:
+            msg_Err(p_input, "input.c %d-%s\n", val.psz_string, val.psz_string);
+            demux_Control( input_priv(p_input)->master->p_demux, DEMUX_SET_PARAMETER,val.psz_string);
+            break;
+        case INPUT_CONTROL_REVERSE_PLAY:
+            msg_Err(p_input, "input.c  INPUT_CONTROL_REVERSE_PLAY\n");
+            demux_Control( input_priv(p_input)->master->p_demux, DEMUX_SET_REVERSE_PLAY, NULL);
+            break; 
+        case INPUT_CONTROL_REVERSE_STOP:
+            demux_Control( input_priv(p_input)->master->p_demux, DEMUX_SET_REVERSE_STOP, NULL);
+            break;
         default:
             msg_Err( p_input, "not yet implemented" );
             break;

@@ -75,6 +75,19 @@ static int RecordCallback( vlc_object_t *p_this, char const *psz_cmd,
 static int FrameNextCallback( vlc_object_t *p_this, char const *psz_cmd,
                               vlc_value_t oldval, vlc_value_t newval,
                               void *p_data );
+static int BidirectionalCallback( vlc_object_t *p_this, char const *psz_cmd,
+                          vlc_value_t oldval, vlc_value_t newval,
+                          void *p_data );
+static int SetParamCallback(vlc_object_t *p_this, char const *psz_cmd,
+                            vlc_value_t oldval, vlc_value_t newval,
+                            void *p_data );
+static int SetReversePlayCallback(vlc_object_t *p_this, char const *psz_cmd,
+                          vlc_value_t oldval, vlc_value_t newval,
+                          void *p_data );
+
+static int SetReverseStopCallback(vlc_object_t *p_this, char const *psz_cmd,
+                          vlc_value_t oldval, vlc_value_t newval,
+                          void *p_data );
 
 typedef struct
 {
@@ -108,6 +121,10 @@ static const vlc_input_callback_t p_input_callbacks[] =
     CALLBACK( "spu-es", EsSpuCallback ),
     CALLBACK( "record", RecordCallback ),
     CALLBACK( "frame-next", FrameNextCallback ),
+    CALLBACK( "bidirectional", BidirectionalCallback ),
+    CALLBACK( "setparameters", SetParamCallback),      
+    CALLBACK( "reverse-play", SetReversePlayCallback), 
+    CALLBACK( "reverse-stop", SetReverseStopCallback), 
 
     CALLBACK( NULL, NULL )
 };
@@ -213,6 +230,26 @@ void input_ControlVarInit ( input_thread_t *p_input )
 
     var_Create( p_input, "bit-rate", VLC_VAR_INTEGER );
     var_Create( p_input, "sample-rate", VLC_VAR_INTEGER );
+
+    /* bidirectional */
+    var_Create( p_input, "bidsize", VLC_VAR_INTEGER );
+    var_Create( p_input, "bidirectional", VLC_VAR_ADDRESS );
+    var_Create( p_input, "setparameters", VLC_VAR_STRING);
+    var_Create( p_input, "reverse-play", VLC_VAR_INTEGER);
+    var_Create( p_input, "reverse-stop", VLC_VAR_INTEGER);
+    var_Create( p_input, "rsample-rate", VLC_VAR_INTEGER );
+    var_SetInteger( p_input, "rsample-rate", 0 );
+    var_Create( p_input, "rchannels", VLC_VAR_INTEGER );
+    var_SetInteger( p_input, "rchannels", 1 );
+    var_Create( p_input, "rtransport", VLC_VAR_INTEGER );
+    var_SetInteger( p_input, "rtransport", 0 );
+    var_Create( p_input, "rcode-type", VLC_VAR_INTEGER );
+    var_SetInteger( p_input, "rcode-type", 0 );
+    var_Create( p_input, "raudio-desc", VLC_VAR_STRING );
+    text.psz_string = _("");
+    var_Change( p_input, "raudio-desc", VLC_VAR_SETTEXT, &text, NULL );
+    var_Create( p_input, "setparamenable", VLC_VAR_BOOL);
+    var_SetBool( p_input, "setparamenable", true );
 
     /* Special "intf-event" variable. */
     var_Create( p_input, "intf-event", VLC_VAR_INTEGER );
@@ -566,6 +603,65 @@ static int StateCallback( vlc_object_t *p_this, char const *psz_cmd,
     if( newval.i_int == PLAYING_S || newval.i_int == PAUSE_S )
     {
         input_ControlPush( p_input, INPUT_CONTROL_SET_STATE, &newval );
+        return VLC_SUCCESS;
+    }
+
+    return VLC_EGENERIC;
+}
+
+static int BidirectionalCallback( vlc_object_t *p_this, char const *psz_cmd,
+                          vlc_value_t oldval, vlc_value_t newval,
+                          void *p_data )
+{
+    input_thread_t *p_input = (input_thread_t*)p_this;
+    VLC_UNUSED(psz_cmd); VLC_UNUSED(oldval); VLC_UNUSED(p_data);
+
+    if( newval.p_address != NULL )
+    {
+        input_ControlPush( p_input, INPUT_CONTROL_SET_BID, &newval );
+        return VLC_SUCCESS;
+    }
+
+    return VLC_EGENERIC;
+}
+
+static int SetReversePlayCallback(vlc_object_t *p_this, char const *psz_cmd,
+                          vlc_value_t oldval, vlc_value_t newval,
+                          void *p_data )
+{
+    input_thread_t *p_input = (input_thread_t*)p_this;
+    VLC_UNUSED(psz_cmd); VLC_UNUSED(oldval); VLC_UNUSED(p_data);
+    msg_Err(p_input, "var.c  SetReversePlayCallback\n");
+    input_ControlPush( p_input, INPUT_CONTROL_REVERSE_PLAY, NULL );
+
+    return VLC_EGENERIC;    
+}
+
+static int SetReverseStopCallback(vlc_object_t *p_this, char const *psz_cmd,
+                          vlc_value_t oldval, vlc_value_t newval,
+                          void *p_data )
+{
+    input_thread_t *p_input = (input_thread_t*)p_this;
+    VLC_UNUSED(psz_cmd); VLC_UNUSED(oldval); VLC_UNUSED(p_data);
+
+    input_ControlPush( p_input, INPUT_CONTROL_REVERSE_STOP, NULL );
+
+    return VLC_EGENERIC;    
+}
+
+static int SetParamCallback(vlc_object_t *p_this, char const *psz_cmd,
+                            vlc_value_t oldval, vlc_value_t newval,
+                            void *p_data )
+{
+    input_thread_t *p_input = (input_thread_t*)p_this;
+    VLC_UNUSED(psz_cmd); VLC_UNUSED(oldval); VLC_UNUSED(p_data);
+    
+    if (newval.psz_string != NULL)
+    {
+        msg_Err(p_input, "var.c  SetParamCallback, %s\n",newval.psz_string);
+        vlc_value_t val;
+        val.psz_string = strdup(newval.psz_string);
+        input_ControlPush( p_input, INPUT_CONTROL_SET_PARAMETER, &val );
         return VLC_SUCCESS;
     }
 

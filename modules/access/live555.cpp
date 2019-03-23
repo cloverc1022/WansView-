@@ -65,6 +65,27 @@ extern "C" {
 #include "live555_dtsgen.h"
 }
 
+typedef enum
+{
+    E_REVERSE_PCM,
+    E_REVERSE_AAC,    
+}E_REVERSE_AUDIO_TYPE;
+
+typedef enum
+{
+    E_REVERSE_TRANS_PRIV,
+    E_REVERSE_TRANS_RTP,    
+}E_REVERSE_TRANS_TYPE;
+
+typedef struct reverse_audio_t
+{
+    E_REVERSE_AUDIO_TYPE eType;
+    int                  iSampleRate;
+    int                  iChannels;
+    E_REVERSE_TRANS_TYPE eTransport;
+    demux_t         *p_demux;
+}reverse_audio_t;
+
 /*****************************************************************************
  * Module descriptor
  *****************************************************************************/
@@ -91,7 +112,7 @@ static void Close( vlc_object_t * );
 #define FRAME_BUFFER_SIZE_LONGTEXT N_("RTSP start frame buffer size of the video " \
     "track, can be increased in case of broken pictures due " \
     "to too small buffer.")
-#define DEFAULT_FRAME_BUFFER_SIZE 250000
+#define DEFAULT_FRAME_BUFFER_SIZE 400000
 
 vlc_module_begin ()
     set_description( N_("RTP/RTSP/SDP demuxer (using Live555)" ) )
@@ -107,7 +128,7 @@ vlc_module_begin ()
         add_shortcut( "rtsp", "pnm", "live", "livedotcom" )
         set_capability( "access_demux", 0 )
         set_callbacks( Open, Close )
-        add_bool( "rtsp-tcp", false,
+        add_bool( "rtsp-tcp", true,
                   N_("Use RTP over RTSP (TCP)"),
                   N_("Use RTP over RTSP (TCP)"), true )
             change_safe()

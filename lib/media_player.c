@@ -43,6 +43,9 @@
 #include "media_player_internal.h"
 #include "renderer_discoverer_internal.h"
 
+unsigned int vout_flag = 0;/* tmp  gusen*/
+extern unsigned int g_audio_sample_rate;
+
 #define ES_INIT (-2) /* -1 is reserved for ES deselect */
 
 static int
@@ -418,6 +421,11 @@ input_event_changed( vlc_object_t * p_this, char const * psz_cmd,
             for( size_t i = 0; i < i_vout; i++ )
                 vlc_object_release( pp_vout[i] );
             free( pp_vout );
+        }
+
+        if (0 == vout_flag) /* tmp  gusen*/
+        {
+            vout_flag = 1;
         }
 
         event.type = libvlc_MediaPlayerVout;
@@ -992,6 +1000,11 @@ int libvlc_media_player_play( libvlc_media_player_t *p_mi )
 {
     lock_input( p_mi );
 
+    if (1 == vout_flag) /* tmp  gusen*/
+    {
+        vout_flag = 0;
+    }
+
     input_thread_t *p_input_thread = p_mi->input.p_thread;
     if( p_input_thread )
     {
@@ -1074,6 +1087,161 @@ void libvlc_media_player_set_pause( libvlc_media_player_t *p_mi, int paused )
     }
 
     vlc_object_release( p_input_thread );
+}
+
+/* APP连上IPC以后才能调用该接口 */
+int libvlc_media_player_get_reverse_audio_desc(libvlc_media_player_t *p_mi, libvlc_reverse_audio_t *p_audio_desc)
+{
+    input_thread_t *p_input = libvlc_get_input_thread(p_mi);
+    if (!p_input || var_GetInteger(p_input, "rsample-rate") == 0)
+    {
+        return -1;
+    }
+
+    p_audio_desc->eType = var_GetInteger(p_input, "rcode-type");
+    p_audio_desc->iSampleRate = var_GetInteger(p_input, "rsample-rate");
+    p_audio_desc->iChannels = var_GetInteger(p_input, "rchannels");
+    p_audio_desc->eTransport = var_GetInteger(p_input, "rtransport");
+    p_audio_desc->audio_desc = var_GetString(p_input, "raudio-desc");
+    return 0;
+}
+
+void libvlc_media_player_send_set_parameter(libvlc_media_player_t *p_mi, libvlc_reverse_audio_t *p_audio_desc)
+{
+    char *parameters;
+    char audio_type[8] = {0};
+    char transport[8] = {0};
+    input_thread_t * p_input_thread = libvlc_get_input_thread(p_mi);
+
+    if (!p_input_thread)
+    {
+        return;
+    }
+
+    switch (p_audio_desc->eType)
+    {
+        case libvlc_reverse_audio_aac:
+            strcpy(audio_type, "AAC");
+            break;
+
+        case libvlc_reverse_audio_pcm:
+        default:
+            strcpy(audio_type, "PCM");
+            break;
+    }
+
+    switch (p_audio_desc->eTransport)
+    {
+        case libvlc_reverse_trans_rtp:
+            strcpy(transport, "RTP");
+            break;
+
+        case libvlc_reverse_trans_priv:
+        default:
+            strcpy(transport, "PRIV");
+            break;
+    }
+
+
+    if (asprintf( &parameters, "audio:%s/%d/%d\r\ntransport:%s\r\n\r\n",
+        audio_type, p_audio_desc->iSampleRate, p_audio_desc->iChannels, transport ) == -1)
+    {
+        return;
+    }
+
+    msg_Err(p_input_thread, "media_player:%s\n", parameters);
+ 
+    var_SetString(p_input_thread, "setparameters", parameters);
+    free(parameters);
+    vlc_object_release( p_input_thread );
+} //audio:PCM/8000/1  transport:PRIV
+
+void libvlc_media_player_reverse_play(libvlc_media_player_t *p_mi)
+{
+    input_thread_t * p_input_thread = libvlc_get_input_thread(p_mi);
+    msg_Err(p_input_thread, "media_player.c  libvlc_media_player_reverse_play\n");
+    var_SetInteger(p_input_thread, "reverse-play", 1);
+    vlc_object_release( p_input_thread );
+}
+
+void libvlc_media_player_reverse_stop(libvlc_media_player_t *p_mi)
+{
+    input_thread_t * p_input_thread = libvlc_get_input_thread(p_mi);
+    if (!p_input_thread)
+    {
+        return;
+    }
+    msg_Err(p_input_thread, "media_player.c  libvlc_media_player_reverse_stop\n");
+    var_SetInteger(p_input_thread, "reverse-stop", 1);
+    vlc_object_release( p_input_thread );
+}
+
+/* 私有的 */
+void libvlc_media_player_send_reverse_audio(libvlc_media_player_t *p_mi, void *audio_buf, int audio_size)
+{
+    unsigned char *pBuf = NULL;
+    input_thread_t * p_input_thread = libvlc_get_input_thread(p_mi);
+
+    if (!p_input_thread)
+        {
+                return;
+            }
+
+    if (1 == vout_flag)
+    {
+        return;
+    }
+
+    pBuf = (unsigned char *)malloc(audio_size+4);
+    pBuf[0] = 0x24;
+    pBuf[1] = 0x24;
+    pBuf[2] = (audio_size & 0xff00)>>8;
+    pBuf[3] = audio_size & 0x00ff;
+
+    memcpy(pBuf+4, audio_buf, audio_size);
+    var_SetAddress(p_input_thread, "bidirectional", pBuf);
+    vlc_object_release( p_input_thread );
+}
+
+void libvlc_media_player_send_reverse_audio_rtp(libvlc_media_player_t *p_mi,
+                                                     void *audio_buf, int audio_size, unsigned int iTimestamp)
+{
+    static unsigned int iCseq = 0;
+    unsigned char *pBuf = NULL;
+    input_thread_t * p_input_thread = libvlc_get_input_thread(p_mi);
+
+    if (!p_input_thread)
+    {
+        return;
+    }
+
+    iCseq++;
+    if (iCseq >= 0xffff)
+    {
+        iCseq = 1;
+    }
+
+    pBuf = (unsigned char *)malloc(audio_size+16);
+    pBuf[0] = 0x24;
+    pBuf[1] = 0x24;
+    pBuf[2] = ((audio_size+12) & 0xff00)>>8;
+    pBuf[3] = (audio_size+12) & 0x00ff;
+    pBuf[4] = 2;  //4 csrc_len+ 1 extension + padding + version
+    pBuf[5] = 0xc5;//7payload + marker (98<<1+1)
+    pBuf[6] = (iCseq & 0xff00) >> 8;//2bytes 序列号
+    pBuf[7] = iCseq & 0xff;
+    pBuf[8] = (iTimestamp & 0xff000000) >> 24;  //4bytes 时间戳
+    pBuf[9] = (iTimestamp & 0xff0000) >> 16;
+    pBuf[10] = (iTimestamp & 0xff00) >> 8;
+    pBuf[11] = iTimestamp & 0xff;
+    pBuf[12] = 0x1a;  //4bytes ccrc
+    pBuf[13] = 0x14;
+    pBuf[14] = 0x05;
+    pBuf[15] = 0x00;
+
+    memcpy(pBuf+16, audio_buf, audio_size);
+    var_SetAddress(p_input_thread, "bidirectional", pBuf);
+    vlc_object_release( p_input_thread );        
 }
 
 /**************************************************************************
@@ -2185,6 +2353,47 @@ static int file_recording_finished(vlc_object_t *p_this, char const *psz_cmd,
 
     libvlc_event_send(&p_mi->event_manager, &event);
     return VLC_SUCCESS;
+}
+
+void libvlc_media_player_eCldAlgInit(int sample)
+{
+    eCldAlgInit(sample);
+}
+
+void libvlc_media_player_audioEchoCancel(unsigned char* pMicBuffer,int Miclength,unsigned char* pEfBuffer,int Eflength)
+{
+    audioEchoCancel(pMicBuffer,Miclength,pEfBuffer,Eflength);
+}
+
+int libvlc_media_player_VADCheck(unsigned char* pInBuffer,int Inlength)
+{
+    return VADCheck(pInBuffer,Inlength);
+}
+
+unsigned char* libvlc_media_player_GetEfDate(unsigned char* efDate, int length)
+{
+    return GetEfDate(efDate, length);
+}
+
+void libvlc_media_player_OpRealTime(int value, int sample)
+{
+    setEnablePush(value,sample);
+    if(value == 0)
+        ReleaseQueue();
+}
+
+void libvlc_media_player_SetRealTimeTalkFlag(int value)
+{
+    if(value >= 0)
+    {
+        vout_flag = value;
+    }
+}
+
+/*用于app获取正确的音频采样率,zte*/
+int libvlc_media_player_audio_sample_rate( void )
+{
+    return (int)g_audio_sample_rate;/*采样率值未达到31bit*/
 }
 
 int libvlc_media_player_get_stats( libvlc_media_player_t *p_mi, void *p_stats )

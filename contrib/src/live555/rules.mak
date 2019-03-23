@@ -76,6 +76,7 @@ endif
 	$(APPLY) $(SRC)/live555/add-pkgconfig-file.patch
 	# Expose Server:
 	$(APPLY) $(SRC)/live555/expose_server_string.patch
+	$(APPLY) $(SRC)/live555/live555-all-patch.patch
 ifdef HAVE_ANDROID
 ifneq ($(LEGACY_NDK), 1)
 	# Always access in_addr.s_addr field
@@ -93,6 +94,8 @@ SUBDIRS=groupsock liveMedia UsageEnvironment BasicUsageEnvironment
 
 .live555: live555
 	$(REQUIRE_GNUV3)
+	mkdir -p -- "$(PREFIX)/include"
+	cp $</liveMedia/include/Base64.hh "$(PREFIX)/include/"
 	cd $< && for subdir in $(SUBDIRS); do \
 		echo "PREFIX = $(PREFIX)" >> $$subdir/Makefile.head && \
 		echo "LIBDIR = $(PREFIX)/lib" >> $$subdir/Makefile.head ; done

@@ -330,6 +330,11 @@ enum demux_query_e
      */
     DEMUX_FILTER_ENABLE,
     DEMUX_FILTER_DISABLE
+
+    DEMUX_SET_BID,          /* arg1=int */
+    DEMUX_SET_PARAMETER,
+    DEMUX_SET_REVERSE_PLAY,
+    DEMUX_SET_REVERSE_STOP
 };
 
 /*************************************************************************

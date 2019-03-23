@@ -177,6 +177,7 @@ static int TimeGet(audio_output_t* aout, mtime_t* restrict drift)
     return 0;
 }
 
+extern void FlushQueue(void);/*libvlc_queue.c*/
 static void Flush(audio_output_t *aout, bool drain)
 {
     aout_sys_t *sys = aout->sys;
@@ -189,6 +190,7 @@ static void Flush(audio_output_t *aout, bool drain)
         vlc_mutex_lock(&sys->lock);
         SetPlayState(sys->playerPlay, SL_PLAYSTATE_STOPPED);
         Clear(sys->playerBufferQueue);
+        FlushQueue();
         SetPlayState(sys->playerPlay, SL_PLAYSTATE_PLAYING);
 
         /* release audio data not yet written to opensles */
@@ -300,8 +302,12 @@ static int WriteBuffer(audio_output_t *aout)
     if (!b)
         sys->pp_buffer_last = &sys->p_buffer_chain;
 
+#if 0 /* disable vlc playerBufferQueue*/
     SLresult r = Enqueue(sys->playerBufferQueue,
         &sys->buf[unit_size * sys->next_buf], unit_size);
+#else
+    SLresult r = SL_RESULT_SUCCESS;
+#endif
 
     sys->samples -= sys->samples_per_buf;
 

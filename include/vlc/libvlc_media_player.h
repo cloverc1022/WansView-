@@ -92,6 +92,29 @@ typedef struct libvlc_audio_output_t
 
 } libvlc_audio_output_t;
 
+typedef enum
+{
+    libvlc_reverse_audio_pcm,
+    libvlc_reverse_audio_aac,
+}libvlc_reverse_audio_type;
+
+typedef enum
+{
+    libvlc_reverse_trans_priv,
+    libvlc_reverse_trans_rtp,
+}libvlc_reverse_transport_type;
+
+typedef struct libvlc_reverse_audio_t
+{
+    libvlc_reverse_audio_type eType;
+    int                  iSampleRate;
+    int                  iChannels;
+    libvlc_reverse_transport_type eTransport;
+    bool                b_get_param;
+    bool                b_set_param;
+    char                *audio_desc;
+}libvlc_reverse_audio_t;
+
 /**
  * Description for audio output device.
  */
@@ -2039,6 +2062,10 @@ LIBVLC_API float libvlc_audio_equalizer_get_amp_at_index( libvlc_equalizer_t *p_
  */
 LIBVLC_API int libvlc_media_player_set_equalizer( libvlc_media_player_t *p_mi, libvlc_equalizer_t *p_equalizer );
 
+LIBVLC_API void libvlc_media_player_send_reverse_audio(libvlc_media_player_t *p_mi, void *audio_buf, int audio_size);
+LIBVLC_API void libvlc_media_player_eCldAlgInit(int sample);
+LIBVLC_API void libvlc_media_player_audioEchoCancel(unsigned char* pMicBuffer,int Miclength,unsigned char* pEfBuffer,int Eflength);
+LIBVLC_API void libvlc_media_player_OpRealTime(int value, int sample);
 /**
  * Media player roles.
  *
@@ -2195,6 +2222,29 @@ LIBVLC_API int libvlc_media_player_record_start( libvlc_media_player_t *p_mi, co
  * \version LibVLC 2.1.0 or later
  */
 LIBVLC_API int libvlc_media_player_record_stop( libvlc_media_player_t *p_mi );
+
+LIBVLC_API void libvlc_media_player_SetRealTimeTalkFlag(int value);
+LIBVLC_API unsigned char* libvlc_media_player_GetEfDate(unsigned char* efDate, int length);
+LIBVLC_API int libvlc_media_player_VADCheck(unsigned char* pInBuffer,int Inlength);
+LIBVLC_API int libvlc_media_player_audio_sample_rate( void );
+
+LIBVLC_API 
+int libvlc_media_player_get_reverse_audio_desc( libvlc_media_player_t *p_mi, 
+                                         libvlc_reverse_audio_t *p_audio_desc);
+
+LIBVLC_API
+void libvlc_media_player_send_reverse_audio_rtp( libvlc_media_player_t *p_mi,
+                                                 void *audio_buf, 
+                                                 int audio_size,
+                                                 unsigned int iTimestamp);
+
+LIBVLC_API
+void libvlc_media_player_send_set_parameter( libvlc_media_player_t *p_mi,
+                                         libvlc_reverse_audio_t *p_audio_desc);
+
+LIBVLC_API void libvlc_media_player_reverse_play( libvlc_media_player_t *p_mi );
+
+LIBVLC_API void libvlc_media_player_reverse_stop( libvlc_media_player_t *p_mi );
 
 LIBVLC_API int libvlc_media_player_get_stats( libvlc_media_player_t *p_mi,
                                               void *p_stats );
