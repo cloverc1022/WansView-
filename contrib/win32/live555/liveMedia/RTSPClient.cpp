@@ -140,6 +140,19 @@ unsigned RTSPClient::sendSetParameterCommand(MediaSession& session, responseHand
   return result;
 }
 
+unsigned RTSPClient::sendSetParameterCommand2(MediaSession& subsession, responseHandler* responseHandler,
+                                             char const* paramString,
+                                             Authenticator* authenticator) {
+  if (paramString == NULL)
+  {
+      return 0;
+  }
+  if (fCurrentAuthenticator < authenticator) fCurrentAuthenticator = *authenticator;
+
+  unsigned result = sendRequest(new RequestRecord(++fCSeq, "SET_PARAMETER", responseHandler, &subsession, NULL, False, 0.0, 0.0, 0.0, paramString));
+  return result;
+} 
+
 unsigned RTSPClient::sendGetParameterCommand(MediaSession& session, responseHandler* responseHandler, char const* parameterName,
                                              Authenticator* authenticator) {
   if (fCurrentAuthenticator < authenticator) fCurrentAuthenticator = *authenticator;
@@ -196,6 +209,21 @@ void RTSPClient::setSpeed(MediaSession* session, float speed) {
       subsession->speed() = speed;
     }
   }
+}
+
+int RTSPClient::sendBidAudio(char *audioBuf, int bufSize)
+{
+    if (audioBuf == NULL || bufSize <= 0 || fOutputSocketNum < 0)
+    {
+        return -1;
+    }
+
+    if(envir().simpleEncrypt)
+    {
+        simpleEncode((unsigned char *)audioBuf, bufSize, envir().simpleEncrypt->encrypt_val);
+    }
+
+    return send(fOutputSocketNum, audioBuf, bufSize, 0);
 }
 
 Boolean RTSPClient::changeResponseHandler(unsigned cseq, responseHandler* newResponseHandler) { 
@@ -361,7 +389,7 @@ unsigned RTSPClient::responseBufferSize = 20000; // default value; you can reass
 RTSPClient::RTSPClient(UsageEnvironment& env, char const* rtspURL,
 		       int verbosityLevel, char const* applicationName,
 		       portNumBits tunnelOverHTTPPortNum, int socketNumToServer)
-  : Medium(env),
+  : Medium(env),track(0),
     desiredMaxIncomingPacketSize(0), fVerbosityLevel(verbosityLevel), fCSeq(1),
     fAllowBasicAuthentication(True), fServerAddress(0),
     fTunnelOverHTTPPortNum(tunnelOverHTTPPortNum),
@@ -470,6 +498,13 @@ unsigned RTSPClient::sendRequest(RequestRecord* request) {
     // First, construct command-specific headers that we need:
 
     char* cmdURL = fBaseURL; // by default
+    char *tempindex;
+    if ((tempindex = strstr(cmdURL, "localport0")) != NULL) {
+        *(--tempindex) = '\0';
+    }
+    if (fVerbosityLevel >= 1) {
+        envir() << cmdURL << ".\n";
+    }
     Boolean cmdURLWasAllocated = False;
 
     char const* protocolStr = "RTSP/1.0"; // by default
@@ -543,8 +578,13 @@ unsigned RTSPClient::sendRequest(RequestRecord* request) {
       if (fVerbosityLevel >= 1) envir() << "\tThe request was base-64 encoded to: " << cmd << "\n\n";
       delete[] origCmd;
     }
-
-    if (send(fOutputSocketNum, cmd, strlen(cmd), MSG_NOSIGNAL) < 0) {
+    
+    int sendlen = (int)strlen(cmd);
+    if(envir().simpleEncrypt)
+    {
+      simpleEncode((unsigned char *)cmd, sendlen, envir().simpleEncrypt->encrypt_val);
+    }
+    if (send(fOutputSocketNum, cmd, sendlen, MSG_NOSIGNAL) < 0) {
       char const* errFmt = "%s send() failed: ";
       unsigned const errLength = strlen(errFmt) + strlen(request->commandName());
       char* err = new char[errLength];
@@ -688,6 +728,8 @@ Boolean RTSPClient::setRequestFields(RequestRecord* request,
     // Note: I think the above is nonstandard, but DSS wants it this way
     char const* portTypeStr;
     portNumBits rtpNumber, rtcpNumber;
+    unsigned transportSize;
+    char* transportStr;
     if (streamUsingTCP) { // streaming over the RTSP connection
       transportTypeStr = "/TCP;unicast";
       portTypeStr = ";interleaved";
@@ -699,7 +741,17 @@ Boolean RTSPClient::setRequestFields(RequestRecord* request,
 	= IsMulticastAddress(connectionAddress) || (connectionAddress == 0 && forceMulticastOnUnspecified);
       transportTypeStr = requestMulticastStreaming ? ";multicast" : ";unicast";
       portTypeStr = requestMulticastStreaming ? ";port" : ";client_port";
-      rtpNumber = subsession.clientPortNum();
+      if (rtpWanPort == 0) {
+          rtpNumber = subsession.clientPortNum();
+      } else {
+          if (track == 0) {
+              rtpNumber = rtpWanPort;
+              track++;
+          } else if (track == 1) {
+              rtpNumber = rtpAudioPort;
+              track = 0;
+          }
+      }
       if (rtpNumber == 0) {
 	envir().setResultMsg("Client port number unknown\n");
 	delete[] cmdURL;
@@ -707,11 +759,23 @@ Boolean RTSPClient::setRequestFields(RequestRecord* request,
       }
       rtcpNumber = subsession.rtcpIsMuxed() ? rtpNumber : rtpNumber + 1;
     }
-    unsigned transportSize = strlen(transportFmt)
-      + strlen(transportTypeStr) + strlen(modeStr) + strlen(portTypeStr) + 2*5 /* max port len */;
-    char* transportStr = new char[transportSize];
-    sprintf(transportStr, transportFmt,
-	    transportTypeStr, modeStr, portTypeStr, rtpNumber, rtcpNumber);
+    if (rtpWanPort != 0) {
+        char destinationStr[100] = {0};
+        memset(destinationStr, 0, 100);
+        sprintf(destinationStr, ";destination=%s;", wanip);
+        transportSize = strlen(transportFmt)
+        + strlen(transportTypeStr) + strlen(modeStr) + strlen(portTypeStr) + 2 * 5 /* max port len */ + strlen(destinationStr);
+        transportStr = new char[transportSize];
+          
+        sprintf(transportStr, transportFmt,
+                  transportTypeStr, modeStr, portTypeStr, rtpNumber, rtcpNumber, destinationStr);
+    } else {   
+        transportSize = strlen(transportFmt)
+          + strlen(transportTypeStr) + strlen(modeStr) + strlen(portTypeStr) + 2*5 /* max port len */;
+        transportStr = new char[transportSize];
+        sprintf(transportStr, transportFmt,
+          transportTypeStr, modeStr, portTypeStr, rtpNumber, rtcpNumber);
+    }
     
     // When sending more than one "SETUP" request, include a "Session:" header in the 2nd and later commands:
     char* sessionStr = createSessionString(fLastSessionId);
@@ -786,7 +850,10 @@ Boolean RTSPClient::setRequestFields(RequestRecord* request,
 	      serverAddressString.val(),
 	      fSessionCookie);
     }
-  } else { // "PLAY", "PAUSE", "TEARDOWN", "RECORD", "SET_PARAMETER", "GET_PARAMETER"
+  } else if (strcmp(request->commandName(), "GET_PARAMETER") == 0 
+   || strcmp(request->commandName(), "SET_PARAMETER") == 0){
+     extraHeaders = (char*)"Content-Type: text/plain\r\n";   
+   } else { // "PLAY", "PAUSE", "TEARDOWN", "RECORD", "SET_PARAMETER", "GET_PARAMETER"
     // First, make sure that we have a RTSP session in progress
     if (fLastSessionId == NULL) {
       envir().setResultMsg("No RTSP session is currently in progress\n");
@@ -866,6 +933,61 @@ int RTSPClient::openConnection() {
     portNumBits urlPortNum;
     char const* urlSuffix;
     if (!parseRTSPURL(envir(), fBaseURL, username, password, destAddress, urlPortNum, &urlSuffix)) break;
+    serverPort = (unsigned short)urlPortNum;
+      
+      char *index = 0;
+      rtspUDPLocalPort = 0;
+      if ((index = strstr(strdup(urlSuffix), "rtspport")) != NULL)
+      {
+          index += 8;
+          if (*index == '=') {
+              sscanf(++index, "%d", &rtspUDPLocalPort);
+              if (rtspUDPLocalPort < 1 || rtspUDPLocalPort > 65535) {
+                  envir() << "the udp port " << rtspUDPLocalPort << " is not valid" << "\n";
+                  break;
+              }
+          }
+      }
+      
+      index = 0;
+      rtpWanPort = 0;
+      if ((index = strstr(strdup(urlSuffix), "wanport0")) != NULL)
+      {
+          index += 8;
+          if (*index == '=') {
+              sscanf(++index, "%d", &rtpWanPort);
+              if (rtpWanPort < 1 || rtpWanPort > 65535) {
+                  envir() << "the rtpwan port " << rtpWanPort << " is not valid" << "\n";
+                  break;
+              }
+          }
+      }
+      
+      index = 0;
+      rtpAudioPort = 0;
+      if ((index = strstr(strdup(urlSuffix), "wanport1")) != NULL) {
+          index += 8;
+          if (*index == '=') {
+              sscanf(++index, "%d", &rtpAudioPort);
+              if (rtpAudioPort < 1 || rtpAudioPort > 65535) {
+                  envir() << "the rtpwan port " << rtpAudioPort << " is not valid" << "\n";
+              }
+          }
+      }
+      
+      index = 0;
+      if ((index = strstr(strdup(urlSuffix), "wanip")) != NULL)
+      {
+          index += 5;
+          if (*index == '=') {
+              sscanf(++index, "%s", wanip);
+              envir() << "wanip is " << wanip << ".\n";
+          }
+      }
+      
+      if (fVerbosityLevel >= 1) {
+          envir() << "urlSuffix is " << urlSuffix << ".\n";
+      }
     portNumBits destPortNum = fTunnelOverHTTPPortNum == 0 ? urlPortNum : fTunnelOverHTTPPortNum;
     if (username != NULL || password != NULL) {
       fCurrentAuthenticator.setUsernameAndPassword(username, password);
@@ -873,8 +995,12 @@ int RTSPClient::openConnection() {
       delete[] password;
     }
     
-    // We don't yet have a TCP socket (or we used to have one, but it got closed).  Set it up now.
-    fInputSocketNum = setupStreamSocket(envir(), 0);
+    if (rtspUDPLocalPort == 0) {
+      // We don't yet have a TCP socket (or we used to have one, but it got closed).  Set it up now.
+      fInputSocketNum = fOutputSocketNum = setupStreamSocket(envir(), 0);
+    } else {
+      fInputSocketNum = fOutputSocketNum = setupDatagramSocket(envir(), rtspUDPLocalPort);
+    }
     if (fInputSocketNum < 0) break;
     ignoreSigPipeOnSocket(fInputSocketNum); // so that servers on the same host that get killed don't also kill us
     if (fOutputSocketNum < 0) fOutputSocketNum = fInputSocketNum;

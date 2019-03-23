@@ -692,7 +692,7 @@ Boolean MediaSubsession::initiate(int useSpecialRTPoffset) {
       // The sockets' port numbers were specified for us.  Use these:
       Boolean const protocolIsRTP = strcmp(fProtocolName, "RTP") == 0;
       if (protocolIsRTP && !fMultiplexRTCPWithRTP) {
-	fClientPortNum = fClientPortNum&~1;
+	//fClientPortNum = fClientPortNum&~1;
 	    // use an even-numbered port for RTP, and the next (odd-numbered) port for RTCP
       }
       if (isSSM()) {
@@ -711,7 +711,8 @@ Boolean MediaSubsession::initiate(int useSpecialRTPoffset) {
 	  fRTCPSocket = fRTPSocket;
 	} else {
 	  // Set our RTCP port to be the RTP port + 1:
-	  portNumBits const rtcpPortNum = fClientPortNum|1;
+	  //portNumBits const rtcpPortNum = fClientPortNum|1;
+    portNumBits const rtcpPortNum = fClientPortNum+1;
 	  if (isSSM()) {
 	    fRTCPSocket = new Groupsock(env(), tempAddr, fSourceFilterAddr, rtcpPortNum);
 	  } else {

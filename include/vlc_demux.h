@@ -329,7 +329,7 @@ enum demux_query_e
      * work in future VLC versions, nor with all demux filters
      */
     DEMUX_FILTER_ENABLE,
-    DEMUX_FILTER_DISABLE
+    DEMUX_FILTER_DISABLE,
 
     DEMUX_SET_BID,          /* arg1=int */
     DEMUX_SET_PARAMETER,

@@ -1,0 +1,464 @@
+diff -Nur a/groupsock/GroupsockHelper.cpp b/groupsock/GroupsockHelper.cpp
+--- a/groupsock/GroupsockHelper.cpp	2017-12-29 08:47:53.943126300 +0800
++++ b/groupsock/GroupsockHelper.cpp	2017-12-29 09:18:57.702833800 +0800
+@@ -40,6 +41,8 @@
+ # define MSG_NOSIGNAL 0
+ #endif
+ 
++#include "Base64.hh"
++
+ // By default, use INADDR_ANY for the sending and receiving interfaces:
+ netAddressBits SendingInterfaceAddr = INADDR_ANY;
+ netAddressBits ReceivingInterfaceAddr = INADDR_ANY;
+@@ -174,6 +177,20 @@
+     }
+   }
+ 
++  struct linger   linger  = {0};
++  linger.l_onoff  = 1;
++  linger.l_linger = 0;
++  if ( 0!= setsockopt(newSocket, SOL_SOCKET, SO_LINGER, (const char *) &linger, sizeof(linger)) )
++  {
++      socketErr(env, "setsockopt error ");
++  }
++  
++  int on  = 1;
++  if ( 0!= setsockopt(newSocket, IPPROTO_TCP, TCP_NODELAY, (const char *) &on, sizeof(on)) )
++  {
++      socketErr(env, "setsockopt error ");
++  }
++
+   return newSocket;
+ }
+ 
+@@ -281,6 +298,19 @@
+       return -1;
+     }
+   }
++  struct linger   linger  = {0};
++  linger.l_onoff  = 1;
++  linger.l_linger = 0;
++  if ( 0!= setsockopt(newSocket, SOL_SOCKET, SO_LINGER, (const char *) &linger, sizeof(linger)) )
++  {
++      socketErr(env, "setsockopt error");
++  }
++  
++  int on  = 1;
++  if ( 0!= setsockopt(newSocket, IPPROTO_TCP, TCP_NODELAY, (const char *) &on, sizeof(on)) )
++  {
++      socketErr(env, "setsockopt error ");
++  }
+ 
+   return newSocket;
+ }
+@@ -318,6 +348,11 @@
+     return -1;
+   }
+ 
++  if(env.simpleEncrypt)
++  {
++    simpleDecode((unsigned char*)buffer, bytesRead, env.simpleEncrypt->encrypt_val);
++  }
++
+   return bytesRead;
+ }
+ 
+diff -Nur a/liveMedia/Base64.cpp b/liveMedia/Base64.cpp
+--- a/liveMedia/Base64.cpp	2016-11-29 05:42:18.000000000 +0800
++++ b/liveMedia/Base64.cpp	2017-12-29 09:19:16.638727200 +0800
+@@ -120,3 +120,35 @@
+   result[numResultBytes] = '\0';
+   return result;
+ }
++
++void simpleEncode(unsigned char * origSigned, int origLength, char key) {
++
++    if ((origSigned == NULL) ||(origLength <= 0))
++        return ;
++    
++    int i;
++    char ckey = key;
++    
++    for(i=0;i<origLength;i++)
++    {
++        *(origSigned + i) ^= ckey;
++    }
++    
++    return ;
++}
++
++void simpleDecode(unsigned char * origSigned, int origLength, char key) {
++
++    if ((origSigned == NULL) ||(origLength <= 0))
++        return ;
++    
++    int i;
++    char ckey = key;
++    
++    for(i=0;i<origLength;i++)
++    {
++        *(origSigned + i) ^= ckey;
++    }
++    
++    return ;
++}
+diff -Nur a/liveMedia/include/Base64.hh b/liveMedia/include/Base64.hh
+--- a/liveMedia/include/Base64.hh	2016-11-29 05:42:18.000000000 +0800
++++ b/liveMedia/include/Base64.hh	2017-12-29 09:19:32.628326000 +0800
+@@ -40,4 +40,7 @@
+     // returns a 0-terminated string that
+     // the caller is responsible for delete[]ing.
+ 
++void simpleEncode(unsigned char * origSigned, int origLength, char key);
++void simpleDecode(unsigned char * origSigned, int origLength, char key);
++
+ #endif
+diff -Nur a/liveMedia/include/RTSPClient.hh b/liveMedia/include/RTSPClient.hh
+--- a/liveMedia/include/RTSPClient.hh	2017-12-29 08:47:53.967126300 +0800
++++ b/liveMedia/include/RTSPClient.hh	2017-12-29 09:06:43.664437300 +0800
+@@ -144,6 +144,12 @@
+       // Issues an aggregate RTSP "SET_PARAMETER" command on "session", then returns the "CSeq" sequence number that was used in the command.
+       // (The "responseHandler" and "authenticator" parameters are as described for "sendDescribeCommand".)
+ 
++  unsigned sendSetParameterCommand2(MediaSession& session, responseHandler* responseHandler,
++             char const* paramString,
++             Authenticator* authenticator);
++               
++  int sendBidAudio(char *audioBuf, int bufSize);
++
+   unsigned sendGetParameterCommand(MediaSession& session, responseHandler* responseHandler, char const* parameterName,
+ 				   Authenticator* authenticator = NULL);
+       // Issues an aggregate RTSP "GET_PARAMETER" command on "session", then returns the "CSeq" sequence number that was used in the command.
+@@ -193,6 +199,12 @@
+   static unsigned responseBufferSize;
+ 
+ public: // Some compilers complain if this is "private:"
++  int rtspUDPLocalPort;
++  int rtpWanPort;
++  int rtpAudioPort;
++  char wanip[15];
++  int track;
++  unsigned short serverPort;
+   // The state of a request-in-progress:
+   class RequestRecord {
+   public:
+diff -Nur a/liveMedia/MediaSession.cpp b/liveMedia/MediaSession.cpp
+--- a/liveMedia/MediaSession.cpp	2016-11-29 05:42:18.000000000 +0800
++++ b/liveMedia/MediaSession.cpp	2017-12-29 09:08:01.493219400 +0800
+@@ -692,7 +692,7 @@
+       // The sockets' port numbers were specified for us.  Use these:
+       Boolean const protocolIsRTP = strcmp(fProtocolName, "RTP") == 0;
+       if (protocolIsRTP && !fMultiplexRTCPWithRTP) {
+-	fClientPortNum = fClientPortNum&~1;
++	//fClientPortNum = fClientPortNum&~1;
+ 	    // use an even-numbered port for RTP, and the next (odd-numbered) port for RTCP
+       }
+       if (isSSM()) {
+@@ -711,7 +711,8 @@
+ 	  fRTCPSocket = fRTPSocket;
+ 	} else {
+ 	  // Set our RTCP port to be the RTP port + 1:
+-	  portNumBits const rtcpPortNum = fClientPortNum|1;
++	  //portNumBits const rtcpPortNum = fClientPortNum|1;
++    portNumBits const rtcpPortNum = fClientPortNum+1;
+ 	  if (isSSM()) {
+ 	    fRTCPSocket = new Groupsock(env(), tempAddr, fSourceFilterAddr, rtcpPortNum);
+ 	  } else {
+diff -Nur a/liveMedia/RTCP.cpp b/liveMedia/RTCP.cpp
+--- a/liveMedia/RTCP.cpp	2016-11-29 05:42:18.000000000 +0800
++++ b/liveMedia/RTCP.cpp	2017-12-29 09:25:34.877547300 +0800
+@@ -1098,7 +1098,17 @@
+   // Begin by figuring out the size of the entire SDES report:
+   unsigned numBytes = 4;
+       // counts the SSRC, but not the header; it'll get subtracted out
+-  numBytes += fCNAME.totalSize(); // includes id and length
++   // add homecare desc
++  // ". ZTE SmartHome - XiaoXingKanKan"
++  unsigned char const hcDes[32] = 
++                       { 0x2e, 0x20, 0x5a, 0x54, 0x45, 0x20, 0x53, 
++                         0x6d, 0x61, 0x72, 0x74, 0x48, 0x6f, 0x6d, 
++                         0x65, 0x20, 0x2d, 0x20, 0x58, 0x69, 0x61, 
++                         0x6f, 0x58, 0x69, 0x6e, 0x67, 0x4b, 0x61, 
++                         0x6e, 0x4b, 0x61, 0x6e };
++  unsigned slen = 32;
++  unsigned DESTotalSize = fCNAME.totalSize() + slen;
++  numBytes += DESTotalSize; // includes id and length
+   numBytes += 1; // the special END item
+ 
+   unsigned num4ByteWords = (numBytes + 3)/4;
+@@ -1116,6 +1126,7 @@
+ 
+   // Add the CNAME:
+   fOutBuf->enqueue(fCNAME.data(), fCNAME.totalSize());
++  fOutBuf->enqueue(hcDes, slen); // add homecare desc
+ 
+   // Add the 'END' item (i.e., a zero byte), plus any more needed to pad:
+   unsigned numPaddingBytesNeeded = 4 - (fOutBuf->curPacketSize() % 4);
+diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
+--- a/liveMedia/RTSPClient.cpp	2017-12-29 08:47:53.967126300 +0800
++++ b/liveMedia/RTSPClient.cpp	2017-12-29 09:21:54.247486500 +0800
+@@ -140,6 +140,19 @@
+   return result;
+ }
+ 
++unsigned RTSPClient::sendSetParameterCommand2(MediaSession& subsession, responseHandler* responseHandler,
++                                             char const* paramString,
++                                             Authenticator* authenticator) {
++  if (paramString == NULL)
++  {
++      return 0;
++  }
++  if (fCurrentAuthenticator < authenticator) fCurrentAuthenticator = *authenticator;
++
++  unsigned result = sendRequest(new RequestRecord(++fCSeq, "SET_PARAMETER", responseHandler, &subsession, NULL, False, 0.0, 0.0, 0.0, paramString));
++  return result;
++} 
++
+ unsigned RTSPClient::sendGetParameterCommand(MediaSession& session, responseHandler* responseHandler, char const* parameterName,
+                                              Authenticator* authenticator) {
+   if (fCurrentAuthenticator < authenticator) fCurrentAuthenticator = *authenticator;
+@@ -198,6 +211,21 @@
+   }
+ }
+ 
++int RTSPClient::sendBidAudio(char *audioBuf, int bufSize)
++{
++    if (audioBuf == NULL || bufSize <= 0 || fOutputSocketNum < 0)
++    {
++        return -1;
++    }
++
++    if(envir().simpleEncrypt)
++    {
++        simpleEncode((unsigned char *)audioBuf, bufSize, envir().simpleEncrypt->encrypt_val);
++    }
++
++    return send(fOutputSocketNum, audioBuf, bufSize, 0);
++}
++
+ Boolean RTSPClient::changeResponseHandler(unsigned cseq, responseHandler* newResponseHandler) { 
+   // Look for the matching request record in each of our 'pending requests' queues:
+   RequestRecord* request;
+@@ -361,7 +389,7 @@
+ RTSPClient::RTSPClient(UsageEnvironment& env, char const* rtspURL,
+ 		       int verbosityLevel, char const* applicationName,
+ 		       portNumBits tunnelOverHTTPPortNum, int socketNumToServer)
+-  : Medium(env),
++  : Medium(env),track(0),
+     desiredMaxIncomingPacketSize(0), fVerbosityLevel(verbosityLevel), fCSeq(1),
+     fAllowBasicAuthentication(True), fServerAddress(0),
+     fTunnelOverHTTPPortNum(tunnelOverHTTPPortNum),
+@@ -470,6 +498,13 @@
+     // First, construct command-specific headers that we need:
+ 
+     char* cmdURL = fBaseURL; // by default
++    char *tempindex;
++    if ((tempindex = strstr(cmdURL, "localport0")) != NULL) {
++        *(--tempindex) = '\0';
++    }
++    if (fVerbosityLevel >= 1) {
++        envir() << cmdURL << ".\n";
++    }
+     Boolean cmdURLWasAllocated = False;
+ 
+     char const* protocolStr = "RTSP/1.0"; // by default
+@@ -543,8 +578,13 @@
+       if (fVerbosityLevel >= 1) envir() << "\tThe request was base-64 encoded to: " << cmd << "\n\n";
+       delete[] origCmd;
+     }
+-
+-    if (send(fOutputSocketNum, cmd, strlen(cmd), MSG_NOSIGNAL) < 0) {
++    
++    int sendlen = (int)strlen(cmd);
++    if(envir().simpleEncrypt)
++    {
++      simpleEncode((unsigned char *)cmd, sendlen, envir().simpleEncrypt->encrypt_val);
++    }
++    if (send(fOutputSocketNum, cmd, sendlen, MSG_NOSIGNAL) < 0) {
+       char const* errFmt = "%s send() failed: ";
+       unsigned const errLength = strlen(errFmt) + strlen(request->commandName());
+       char* err = new char[errLength];
+@@ -688,6 +728,8 @@
+     // Note: I think the above is nonstandard, but DSS wants it this way
+     char const* portTypeStr;
+     portNumBits rtpNumber, rtcpNumber;
++    unsigned transportSize;
++    char* transportStr;
+     if (streamUsingTCP) { // streaming over the RTSP connection
+       transportTypeStr = "/TCP;unicast";
+       portTypeStr = ";interleaved";
+@@ -699,7 +741,17 @@
+ 	= IsMulticastAddress(connectionAddress) || (connectionAddress == 0 && forceMulticastOnUnspecified);
+       transportTypeStr = requestMulticastStreaming ? ";multicast" : ";unicast";
+       portTypeStr = requestMulticastStreaming ? ";port" : ";client_port";
+-      rtpNumber = subsession.clientPortNum();
++      if (rtpWanPort == 0) {
++          rtpNumber = subsession.clientPortNum();
++      } else {
++          if (track == 0) {
++              rtpNumber = rtpWanPort;
++              track++;
++          } else if (track == 1) {
++              rtpNumber = rtpAudioPort;
++              track = 0;
++          }
++      }
+       if (rtpNumber == 0) {
+ 	envir().setResultMsg("Client port number unknown\n");
+ 	delete[] cmdURL;
+@@ -707,11 +759,23 @@
+       }
+       rtcpNumber = subsession.rtcpIsMuxed() ? rtpNumber : rtpNumber + 1;
+     }
+-    unsigned transportSize = strlen(transportFmt)
+-      + strlen(transportTypeStr) + strlen(modeStr) + strlen(portTypeStr) + 2*5 /* max port len */;
+-    char* transportStr = new char[transportSize];
+-    sprintf(transportStr, transportFmt,
+-	    transportTypeStr, modeStr, portTypeStr, rtpNumber, rtcpNumber);
++    if (rtpWanPort != 0) {
++        char destinationStr[100] = {0};
++        memset(destinationStr, 0, 100);
++        sprintf(destinationStr, ";destination=%s;", wanip);
++        transportSize = strlen(transportFmt)
++        + strlen(transportTypeStr) + strlen(modeStr) + strlen(portTypeStr) + 2 * 5 /* max port len */ + strlen(destinationStr);
++        transportStr = new char[transportSize];
++          
++        sprintf(transportStr, transportFmt,
++                  transportTypeStr, modeStr, portTypeStr, rtpNumber, rtcpNumber, destinationStr);
++    } else {   
++        transportSize = strlen(transportFmt)
++          + strlen(transportTypeStr) + strlen(modeStr) + strlen(portTypeStr) + 2*5 /* max port len */;
++        transportStr = new char[transportSize];
++        sprintf(transportStr, transportFmt,
++          transportTypeStr, modeStr, portTypeStr, rtpNumber, rtcpNumber);
++    }
+     
+     // When sending more than one "SETUP" request, include a "Session:" header in the 2nd and later commands:
+     char* sessionStr = createSessionString(fLastSessionId);
+@@ -786,7 +850,10 @@
+ 	      serverAddressString.val(),
+ 	      fSessionCookie);
+     }
+-  } else { // "PLAY", "PAUSE", "TEARDOWN", "RECORD", "SET_PARAMETER", "GET_PARAMETER"
++  } else if (strcmp(request->commandName(), "GET_PARAMETER") == 0 
++   || strcmp(request->commandName(), "SET_PARAMETER") == 0){
++     extraHeaders = (char*)"Content-Type: text/plain\r\n";   
++   } else { // "PLAY", "PAUSE", "TEARDOWN", "RECORD", "SET_PARAMETER", "GET_PARAMETER"
+     // First, make sure that we have a RTSP session in progress
+     if (fLastSessionId == NULL) {
+       envir().setResultMsg("No RTSP session is currently in progress\n");
+@@ -866,6 +933,61 @@
+     portNumBits urlPortNum;
+     char const* urlSuffix;
+     if (!parseRTSPURL(envir(), fBaseURL, username, password, destAddress, urlPortNum, &urlSuffix)) break;
++    serverPort = (unsigned short)urlPortNum;
++      
++      char *index = 0;
++      rtspUDPLocalPort = 0;
++      if ((index = strstr(strdup(urlSuffix), "rtspport")) != NULL)
++      {
++          index += 8;
++          if (*index == '=') {
++              sscanf(++index, "%d", &rtspUDPLocalPort);
++              if (rtspUDPLocalPort < 1 || rtspUDPLocalPort > 65535) {
++                  envir() << "the udp port " << rtspUDPLocalPort << " is not valid" << "\n";
++                  break;
++              }
++          }
++      }
++      
++      index = 0;
++      rtpWanPort = 0;
++      if ((index = strstr(strdup(urlSuffix), "wanport0")) != NULL)
++      {
++          index += 8;
++          if (*index == '=') {
++              sscanf(++index, "%d", &rtpWanPort);
++              if (rtpWanPort < 1 || rtpWanPort > 65535) {
++                  envir() << "the rtpwan port " << rtpWanPort << " is not valid" << "\n";
++                  break;
++              }
++          }
++      }
++      
++      index = 0;
++      rtpAudioPort = 0;
++      if ((index = strstr(strdup(urlSuffix), "wanport1")) != NULL) {
++          index += 8;
++          if (*index == '=') {
++              sscanf(++index, "%d", &rtpAudioPort);
++              if (rtpAudioPort < 1 || rtpAudioPort > 65535) {
++                  envir() << "the rtpwan port " << rtpAudioPort << " is not valid" << "\n";
++              }
++          }
++      }
++      
++      index = 0;
++      if ((index = strstr(strdup(urlSuffix), "wanip")) != NULL)
++      {
++          index += 5;
++          if (*index == '=') {
++              sscanf(++index, "%s", wanip);
++              envir() << "wanip is " << wanip << ".\n";
++          }
++      }
++      
++      if (fVerbosityLevel >= 1) {
++          envir() << "urlSuffix is " << urlSuffix << ".\n";
++      }
+     portNumBits destPortNum = fTunnelOverHTTPPortNum == 0 ? urlPortNum : fTunnelOverHTTPPortNum;
+     if (username != NULL || password != NULL) {
+       fCurrentAuthenticator.setUsernameAndPassword(username, password);
+@@ -873,8 +995,12 @@
+       delete[] password;
+     }
+     
+-    // We don't yet have a TCP socket (or we used to have one, but it got closed).  Set it up now.
+-    fInputSocketNum = setupStreamSocket(envir(), 0);
++    if (rtspUDPLocalPort == 0) {
++      // We don't yet have a TCP socket (or we used to have one, but it got closed).  Set it up now.
++      fInputSocketNum = fOutputSocketNum = setupStreamSocket(envir(), 0);
++    } else {
++      fInputSocketNum = fOutputSocketNum = setupDatagramSocket(envir(), rtspUDPLocalPort);
++    }
+     if (fInputSocketNum < 0) break;
+     ignoreSigPipeOnSocket(fInputSocketNum); // so that servers on the same host that get killed don't also kill us
+     if (fOutputSocketNum < 0) fOutputSocketNum = fInputSocketNum;
+diff -Nur a/UsageEnvironment/include/UsageEnvironment.hh b/UsageEnvironment/include/UsageEnvironment.hh
+--- a/UsageEnvironment/include/UsageEnvironment.hh	2016-11-29 05:42:19.000000000 +0800
++++ b/UsageEnvironment/include/UsageEnvironment.hh	2017-12-29 09:22:43.246385900 +0800
+@@ -48,6 +48,13 @@
+ 
+ class TaskScheduler; // forward
+ 
++struct _simpleEncrypt
++{
++    int encrypt_mode;
++    char encrypt_val;
++    void *priv;
++};
++
+ // An abstract base class, subclassed for each use of the library
+ 
+ class UsageEnvironment {
+@@ -90,6 +97,8 @@
+   void* liveMediaPriv;
+   void* groupsockPriv;
+ 
++  struct _simpleEncrypt *simpleEncrypt;
++  
+ protected:
+   UsageEnvironment(TaskScheduler& scheduler); // abstract base class
+   virtual ~UsageEnvironment(); // we are deleted only by reclaim()
+diff -Nur a/UsageEnvironment/UsageEnvironment.cpp b/UsageEnvironment/UsageEnvironment.cpp
+--- a/UsageEnvironment/UsageEnvironment.cpp	2016-11-29 05:42:19.000000000 +0800
++++ b/UsageEnvironment/UsageEnvironment.cpp	2017-12-29 09:23:21.701231000 +0800
+@@ -30,7 +30,7 @@
+ }
+ 
+ UsageEnvironment::UsageEnvironment(TaskScheduler& scheduler)
+-  : liveMediaPriv(NULL), groupsockPriv(NULL), fScheduler(scheduler) {
++  : liveMediaPriv(NULL), groupsockPriv(NULL), simpleEncrypt(NULL), fScheduler(scheduler) {
+ }
+ 
+ UsageEnvironment::~UsageEnvironment() {

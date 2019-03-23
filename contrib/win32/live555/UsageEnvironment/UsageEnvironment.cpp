@@ -30,7 +30,7 @@ Boolean UsageEnvironment::reclaim() {
 }
 
 UsageEnvironment::UsageEnvironment(TaskScheduler& scheduler)
-  : liveMediaPriv(NULL), groupsockPriv(NULL), fScheduler(scheduler) {
+  : liveMediaPriv(NULL), groupsockPriv(NULL), simpleEncrypt(NULL), fScheduler(scheduler) {
 }
 
 UsageEnvironment::~UsageEnvironment() {

@@ -3,7 +3,6 @@
 /home/mamengchao/vlc/vlc-3.0/contrib/win32/spatialaudio/CMakeFiles/package.dir
 /home/mamengchao/vlc/vlc-3.0/contrib/win32/spatialaudio/CMakeFiles/edit_cache.dir
 /home/mamengchao/vlc/vlc-3.0/contrib/win32/spatialaudio/CMakeFiles/spatialaudio.dir
-/home/mamengchao/vlc/vlc-3.0/contrib/win32/spatialaudio/CMakeFiles/install/strip.dir
 /home/mamengchao/vlc/vlc-3.0/contrib/win32/spatialaudio/CMakeFiles/install/local.dir
-/home/mamengchao/vlc/vlc-3.0/contrib/win32/spatialaudio/CMakeFiles/list_install_components.dir
 /home/mamengchao/vlc/vlc-3.0/contrib/win32/spatialaudio/CMakeFiles/install.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/spatialaudio/CMakeFiles/list_install_components.dir

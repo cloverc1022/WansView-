@@ -48,6 +48,13 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 class TaskScheduler; // forward
 
+struct _simpleEncrypt
+{
+    int encrypt_mode;
+    char encrypt_val;
+    void *priv;
+};
+
 // An abstract base class, subclassed for each use of the library
 
 class UsageEnvironment {
@@ -90,6 +97,8 @@ public:
   void* liveMediaPriv;
   void* groupsockPriv;
 
+  struct _simpleEncrypt *simpleEncrypt;
+  
 protected:
   UsageEnvironment(TaskScheduler& scheduler); // abstract base class
   virtual ~UsageEnvironment(); // we are deleted only by reclaim()

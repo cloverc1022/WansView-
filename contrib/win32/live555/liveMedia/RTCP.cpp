@@ -1098,7 +1098,17 @@ void RTCPInstance::addSDES() {
   // Begin by figuring out the size of the entire SDES report:
   unsigned numBytes = 4;
       // counts the SSRC, but not the header; it'll get subtracted out
-  numBytes += fCNAME.totalSize(); // includes id and length
+   // add homecare desc
+  // ". ZTE SmartHome - XiaoXingKanKan"
+  unsigned char const hcDes[32] = 
+                       { 0x2e, 0x20, 0x5a, 0x54, 0x45, 0x20, 0x53, 
+                         0x6d, 0x61, 0x72, 0x74, 0x48, 0x6f, 0x6d, 
+                         0x65, 0x20, 0x2d, 0x20, 0x58, 0x69, 0x61, 
+                         0x6f, 0x58, 0x69, 0x6e, 0x67, 0x4b, 0x61, 
+                         0x6e, 0x4b, 0x61, 0x6e };
+  unsigned slen = 32;
+  unsigned DESTotalSize = fCNAME.totalSize() + slen;
+  numBytes += DESTotalSize; // includes id and length
   numBytes += 1; // the special END item
 
   unsigned num4ByteWords = (numBytes + 3)/4;
@@ -1116,6 +1126,7 @@ void RTCPInstance::addSDES() {
 
   // Add the CNAME:
   fOutBuf->enqueue(fCNAME.data(), fCNAME.totalSize());
+  fOutBuf->enqueue(hcDes, slen); // add homecare desc
 
   // Add the 'END' item (i.e., a zero byte), plus any more needed to pad:
   unsigned numPaddingBytesNeeded = 4 - (fOutBuf->curPacketSize() % 4);

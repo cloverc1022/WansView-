@@ -40,6 +40,8 @@ extern "C" int initializeWinsockIfNecessary();
 # define MSG_NOSIGNAL 0
 #endif
 
+#include "Base64.hh"
+
 // By default, use INADDR_ANY for the sending and receiving interfaces:
 netAddressBits SendingInterfaceAddr = INADDR_ANY;
 netAddressBits ReceivingInterfaceAddr = INADDR_ANY;
@@ -174,6 +176,20 @@ int setupDatagramSocket(UsageEnvironment& env, Port port) {
     }
   }
 
+  struct linger   linger  = {0};
+  linger.l_onoff  = 1;
+  linger.l_linger = 0;
+  if ( 0!= setsockopt(newSocket, SOL_SOCKET, SO_LINGER, (const char *) &linger, sizeof(linger)) )
+  {
+      socketErr(env, "setsockopt error ");
+  }
+  
+  int on  = 1;
+  if ( 0!= setsockopt(newSocket, IPPROTO_TCP, TCP_NODELAY, (const char *) &on, sizeof(on)) )
+  {
+      socketErr(env, "setsockopt error ");
+  }
+
   return newSocket;
 }
 
@@ -281,6 +297,19 @@ int setupStreamSocket(UsageEnvironment& env,
       return -1;
     }
   }
+  struct linger   linger  = {0};
+  linger.l_onoff  = 1;
+  linger.l_linger = 0;
+  if ( 0!= setsockopt(newSocket, SOL_SOCKET, SO_LINGER, (const char *) &linger, sizeof(linger)) )
+  {
+      socketErr(env, "setsockopt error");
+  }
+  
+  int on  = 1;
+  if ( 0!= setsockopt(newSocket, IPPROTO_TCP, TCP_NODELAY, (const char *) &on, sizeof(on)) )
+  {
+      socketErr(env, "setsockopt error ");
+  }
 
   return newSocket;
 }
@@ -316,6 +345,11 @@ int readSocket(UsageEnvironment& env,
   } else if (bytesRead == 0) {
     // "recvfrom()" on a stream socket can return 0 if the remote end has closed the connection.  Treat this as an error:
     return -1;
+  }
+
+  if(env.simpleEncrypt)
+  {
+    simpleDecode((unsigned char*)buffer, bytesRead, env.simpleEncrypt->encrypt_val);
   }
 
   return bytesRead;

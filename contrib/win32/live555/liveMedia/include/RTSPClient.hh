@@ -144,6 +144,12 @@ public:
       // Issues an aggregate RTSP "SET_PARAMETER" command on "session", then returns the "CSeq" sequence number that was used in the command.
       // (The "responseHandler" and "authenticator" parameters are as described for "sendDescribeCommand".)
 
+  unsigned sendSetParameterCommand2(MediaSession& session, responseHandler* responseHandler,
+             char const* paramString,
+             Authenticator* authenticator);
+               
+  int sendBidAudio(char *audioBuf, int bufSize);
+
   unsigned sendGetParameterCommand(MediaSession& session, responseHandler* responseHandler, char const* parameterName,
 				   Authenticator* authenticator = NULL);
       // Issues an aggregate RTSP "GET_PARAMETER" command on "session", then returns the "CSeq" sequence number that was used in the command.
@@ -193,6 +199,12 @@ public:
   static unsigned responseBufferSize;
 
 public: // Some compilers complain if this is "private:"
+  int rtspUDPLocalPort;
+  int rtpWanPort;
+  int rtpAudioPort;
+  char wanip[15];
+  int track;
+  unsigned short serverPort;
   // The state of a request-in-progress:
   class RequestRecord {
   public:

@@ -44,7 +44,6 @@
 #include "renderer_discoverer_internal.h"
 
 unsigned int vout_flag = 0;/* tmp  gusen*/
-extern unsigned int g_audio_sample_rate;
 
 #define ES_INIT (-2) /* -1 is reserved for ES deselect */
 
@@ -2355,45 +2354,12 @@ static int file_recording_finished(vlc_object_t *p_this, char const *psz_cmd,
     return VLC_SUCCESS;
 }
 
-void libvlc_media_player_eCldAlgInit(int sample)
-{
-    eCldAlgInit(sample);
-}
-
-void libvlc_media_player_audioEchoCancel(unsigned char* pMicBuffer,int Miclength,unsigned char* pEfBuffer,int Eflength)
-{
-    audioEchoCancel(pMicBuffer,Miclength,pEfBuffer,Eflength);
-}
-
-int libvlc_media_player_VADCheck(unsigned char* pInBuffer,int Inlength)
-{
-    return VADCheck(pInBuffer,Inlength);
-}
-
-unsigned char* libvlc_media_player_GetEfDate(unsigned char* efDate, int length)
-{
-    return GetEfDate(efDate, length);
-}
-
-void libvlc_media_player_OpRealTime(int value, int sample)
-{
-    setEnablePush(value,sample);
-    if(value == 0)
-        ReleaseQueue();
-}
-
 void libvlc_media_player_SetRealTimeTalkFlag(int value)
 {
     if(value >= 0)
     {
         vout_flag = value;
     }
-}
-
-/*用于app获取正确的音频采样率,zte*/
-int libvlc_media_player_audio_sample_rate( void )
-{
-    return (int)g_audio_sample_rate;/*采样率值未达到31bit*/
 }
 
 int libvlc_media_player_get_stats( libvlc_media_player_t *p_mi, void *p_stats )
