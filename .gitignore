@@ -47,9 +47,12 @@ plugins.dat
 patches/*
 
 include/vlc/libvlc_version.h
+win32/_win32/*
+win32/vlc-3.0.6/*
 
 # Ignore build dirs
 build*
 contrib-*
 install-*
 
+.vscode/*
