@@ -95,7 +95,11 @@ typedef struct libvlc_audio_output_t
 typedef enum
 {
     libvlc_reverse_audio_pcm,
+    libvlc_reverse_audio_adpcm,
     libvlc_reverse_audio_aac,
+    libvlc_reverse_audio_G726,
+    libvlc_reverse_audio_G711a,
+    libvlc_reverse_audio_G711u,
 }libvlc_reverse_audio_type;
 
 typedef enum
@@ -2225,18 +2229,11 @@ LIBVLC_API int libvlc_media_player_record_stop( libvlc_media_player_t *p_mi );
 
 LIBVLC_API void libvlc_media_player_SetRealTimeTalkFlag(int value);
 LIBVLC_API unsigned char* libvlc_media_player_GetEfDate(unsigned char* efDate, int length);
-LIBVLC_API int libvlc_media_player_VADCheck(unsigned char* pInBuffer,int Inlength);
 LIBVLC_API int libvlc_media_player_audio_sample_rate( void );
 
 LIBVLC_API 
 int libvlc_media_player_get_reverse_audio_desc( libvlc_media_player_t *p_mi, 
                                          libvlc_reverse_audio_t *p_audio_desc);
-
-LIBVLC_API
-void libvlc_media_player_send_reverse_audio_rtp( libvlc_media_player_t *p_mi,
-                                                 void *audio_buf, 
-                                                 int audio_size,
-                                                 unsigned int iTimestamp);
 
 LIBVLC_API
 void libvlc_media_player_send_set_parameter( libvlc_media_player_t *p_mi,

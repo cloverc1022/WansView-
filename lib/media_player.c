@@ -42,6 +42,7 @@
 #include "media_internal.h" // libvlc_media_set_state()
 #include "media_player_internal.h"
 #include "renderer_discoverer_internal.h"
+#include "audio_g711.h"
 
 unsigned int vout_flag = 0;/* tmp  gusen*/
 
@@ -1119,11 +1120,25 @@ void libvlc_media_player_send_set_parameter(libvlc_media_player_t *p_mi, libvlc_
 
     switch (p_audio_desc->eType)
     {
+        case libvlc_reverse_audio_pcm:
+            strcpy(audio_type, "PCM");
+            break;
+
+        case libvlc_reverse_audio_adpcm:
+            strcpy(audio_type, "ADPCM");
+            break;
         case libvlc_reverse_audio_aac:
             strcpy(audio_type, "AAC");
             break;
-
-        case libvlc_reverse_audio_pcm:
+        case libvlc_reverse_audio_G726:
+            strcpy(audio_type, "G726");
+            break;
+        case libvlc_reverse_audio_G711a:
+            strcpy(audio_type, "G711a");
+            break;
+        case libvlc_reverse_audio_G711u:
+            strcpy(audio_type, "G711u");
+            break;
         default:
             strcpy(audio_type, "PCM");
             break;
@@ -1178,69 +1193,36 @@ void libvlc_media_player_reverse_stop(libvlc_media_player_t *p_mi)
 /* 私有的 */
 void libvlc_media_player_send_reverse_audio(libvlc_media_player_t *p_mi, void *audio_buf, int audio_size)
 {
-    unsigned char *pBuf = NULL;
-    input_thread_t * p_input_thread = libvlc_get_input_thread(p_mi);
+    char *pBuf = NULL;
+	char *a_dst = NULL;
+	int encode_len = 0;
+	input_thread_t * p_input_thread = libvlc_get_input_thread(p_mi);
 
-    if (!p_input_thread)
-        {
-                return;
-            }
+	if (!p_input_thread)
+	{
+		return;
+	}
+       
+    pBuf  = (char *)malloc(audio_size+8);
+    a_dst = (char *)(pBuf + 8);
+	
+	if(audio_size > 0)
+	{
+		encode_len = encode_g711(audio_buf,a_dst,audio_size,G711_A_LAW);
+	}
 
-    if (1 == vout_flag)
-    {
-        return;
-    }
+	pBuf[0] = 0xAC;
+	pBuf[1] = 0xAC;
+	pBuf[2] = 0x0;
+	pBuf[3] = 0x1; 
+    pBuf[4] = 0x0;
+    pBuf[5] = 0x0;
+    pBuf[6] = ((encode_len ) & 0xff00)>>8;
+    pBuf[7] = (encode_len ) & 0x00ff;
 
-    pBuf = (unsigned char *)malloc(audio_size+4);
-    pBuf[0] = 0x24;
-    pBuf[1] = 0x24;
-    pBuf[2] = (audio_size & 0xff00)>>8;
-    pBuf[3] = audio_size & 0x00ff;
 
-    memcpy(pBuf+4, audio_buf, audio_size);
-    var_SetAddress(p_input_thread, "bidirectional", pBuf);
-    vlc_object_release( p_input_thread );
-}
-
-void libvlc_media_player_send_reverse_audio_rtp(libvlc_media_player_t *p_mi,
-                                                     void *audio_buf, int audio_size, unsigned int iTimestamp)
-{
-    static unsigned int iCseq = 0;
-    unsigned char *pBuf = NULL;
-    input_thread_t * p_input_thread = libvlc_get_input_thread(p_mi);
-
-    if (!p_input_thread)
-    {
-        return;
-    }
-
-    iCseq++;
-    if (iCseq >= 0xffff)
-    {
-        iCseq = 1;
-    }
-
-    pBuf = (unsigned char *)malloc(audio_size+16);
-    pBuf[0] = 0x24;
-    pBuf[1] = 0x24;
-    pBuf[2] = ((audio_size+12) & 0xff00)>>8;
-    pBuf[3] = (audio_size+12) & 0x00ff;
-    pBuf[4] = 2;  //4 csrc_len+ 1 extension + padding + version
-    pBuf[5] = 0xc5;//7payload + marker (98<<1+1)
-    pBuf[6] = (iCseq & 0xff00) >> 8;//2bytes 序列号
-    pBuf[7] = iCseq & 0xff;
-    pBuf[8] = (iTimestamp & 0xff000000) >> 24;  //4bytes 时间戳
-    pBuf[9] = (iTimestamp & 0xff0000) >> 16;
-    pBuf[10] = (iTimestamp & 0xff00) >> 8;
-    pBuf[11] = iTimestamp & 0xff;
-    pBuf[12] = 0x1a;  //4bytes ccrc
-    pBuf[13] = 0x14;
-    pBuf[14] = 0x05;
-    pBuf[15] = 0x00;
-
-    memcpy(pBuf+16, audio_buf, audio_size);
-    var_SetAddress(p_input_thread, "bidirectional", pBuf);
-    vlc_object_release( p_input_thread );        
+	var_SetAddress(p_input_thread, "bidirectional", pBuf);
+	vlc_object_release( p_input_thread );   
 }
 
 /**************************************************************************

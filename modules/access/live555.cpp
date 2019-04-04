@@ -67,8 +67,12 @@ extern "C" {
 
 typedef enum
 {
-    E_REVERSE_PCM,
-    E_REVERSE_AAC,    
+    E_REVERSE_PCM = 0X0,
+    E_REVERSE_ADPCM,
+    E_REVERSE_AAC,
+    E_REVERSE_G726,
+    E_REVERSE_G711_ALAW,
+    E_REVERSE_G711_ULAW, 
 }E_REVERSE_AUDIO_TYPE;
 
 typedef enum
