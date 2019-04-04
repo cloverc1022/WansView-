@@ -70,7 +70,7 @@ endif
 libvod_rtsp_plugin_la_SOURCES = misc/rtsp.c
 libvod_rtsp_plugin_la_LIBADD = $(SOCKET_LIBS)
 if ENABLE_SOUT
-misc_LTLIBRARIES += libvod_rtsp_plugin.la
+#misc_LTLIBRARIES += libvod_rtsp_plugin.la
 endif
 
 libxml_plugin_la_SOURCES = misc/xml/libxml.c

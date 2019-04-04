@@ -31,19 +31,19 @@ access_LTLIBRARIES += libidummy_plugin.la
 
 libimem_plugin_la_SOURCES = access/imem-access.c
 libimem_plugin_la_LIBADD = $(LIBM)
-access_LTLIBRARIES += libimem_plugin.la
+#access_LTLIBRARIES += libimem_plugin.la
 
 libaccess_imem_plugin_la_SOURCES = access/imem.c
-access_LTLIBRARIES += libaccess_imem_plugin.la
+#access_LTLIBRARIES += libaccess_imem_plugin.la
 
 libsdp_plugin_la_SOURCES = access/sdp.c
 access_LTLIBRARIES += libsdp_plugin.la
 
 libtimecode_plugin_la_SOURCES = access/timecode.c
-access_LTLIBRARIES += libtimecode_plugin.la
+#access_LTLIBRARIES += libtimecode_plugin.la
 
 libvdr_plugin_la_SOURCES = access/vdr.c
-access_LTLIBRARIES += libvdr_plugin.la
+#access_LTLIBRARIES += libvdr_plugin.la
 
 ### Audio capture ###
 
@@ -325,7 +325,7 @@ libaccess_mms_plugin_la_SOURCES = \
 	demux/asf/libasf_guid.h
 libaccess_mms_plugin_la_CFLAGS = $(AM_CFLAGS)
 libaccess_mms_plugin_la_LIBADD = $(SOCKET_LIBS)
-access_LTLIBRARIES += libaccess_mms_plugin.la
+#access_LTLIBRARIES += libaccess_mms_plugin.la
 
 libsmb_plugin_la_SOURCES = access/smb.c access/smb_common.h
 libsmb_plugin_la_CFLAGS = $(AM_CFLAGS) $(SMBCLIENT_CFLAGS)

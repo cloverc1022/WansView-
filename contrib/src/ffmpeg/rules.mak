@@ -69,7 +69,7 @@ ifdef BUILD_ENCODERS
 FFMPEGCONF += --enable-libmp3lame
 DEPS_ffmpeg += lame $(DEPS_lame)
 else
-FFMPEGCONF += --disable-encoders --disable-muxers
+FFMPEGCONF += --disable-encoders
 endif
 
 # Small size
@@ -220,6 +220,85 @@ endif
 
 FFMPEGCONF += --nm="$(NM)" --ar="$(AR)"
 
+#Program options:
+PROGRAM_OPT=\
+  --disable-programs \
+
+#Documentation options:
+DOC_OPT=\
+  --disable-doc \
+
+#Component options:
+COMP_OPT=\
+  --disable-debug \
+  --disable-avdevice \
+  --disable-devices \
+  --disable-avfilter \
+  --disable-filters \
+  --disable-avresample \
+  --enable-w32threads \
+  --disable-error-resilience \
+  --disable-lsp \
+  --disable-lzo \
+  --disable-faan \
+
+#Individual component options:
+INDIVIDUAL_COMP_OPT=\
+  --disable-everything \
+  --enable-encoder=aac  \
+  --enable-decoder=aac  \
+  --enable-decoder=h264 \
+  --enable-decoder=hevc \
+  --enable-decoder=binkaudio_dct \
+  --enable-decoder=binkaudio_rdft \
+  --enable-decoder=adpcm_g726 \
+  --enable-decoder=flv \
+  --enable-muxer=mpegts  \
+  --enable-muxer=hls  \
+  --enable-muxer=mp4  \
+  --enable-muxer=h264  \
+  --enable-muxer=hevc  \
+  --enable-muxer=flv  \
+  --enable-muxer=live_flv  \
+  --enable-demuxer=aac \
+  --enable-demuxer=mpegts \
+  --enable-demuxer=hls  \
+  --enable-demuxer=h264 \
+  --enable-demuxer=hevc \
+  --enable-demuxer=flv \
+  --enable-parser=h264 \
+  --enable-parser=hevc \
+  --enable-parser=aac \
+  --enable-bsf=aac_adtstoasc \
+  --enable-protocol=http  \
+  --enable-protocol=hls \
+  --enable-protocol=file \
+  --enable-protocol=librtmp \
+  --enable-protocol=rtmp
+
+#External library support:
+EXT_LIB_OPT=\
+  --disable-zlib \
+  --disable-bzlib \
+  --disable-d3d11va \
+  --disable-dxva2 \
+  --disable-vaapi \
+  --disable-vdpau \
+
+#Optimization options:
+OPTIM_OPT=\
+  --disable-amd3dnow \
+  --disable-amd3dnowext \
+  --disable-mmx \
+  --disable-mmxext \
+  --disable-sse --disable-sse2 \
+  --disable-sse3 --disable-sse42 \
+  --disable-ssse3 \
+  --disable-fma3 --disable-fma4 \
+
+WV_FFMPEGCONF=$(PROGRAM_OPT) $(DOC_OPT) $(COMP_OPT) $(INDIVIDUAL_COMP_OPT) $(EXT_LIB_OPT) $(TOOLCHAIN_OPT) #$(OPTIM_OPT)
+
+
 $(TARBALLS)/ffmpeg-$(FFMPEG_BASENAME).tar.xz:
 	$(call download_git,$(FFMPEG_GITURL),,$(FFMPEG_HASH))
 
@@ -248,7 +327,7 @@ endif
 
 .ffmpeg: ffmpeg
 	cd $< && $(HOSTVARS) ./configure \
-		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
+		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) $(WV_FFMPEGCONF)\
 		--prefix="$(PREFIX)" --enable-static --disable-shared
 	cd $< && $(MAKE) install-libs install-headers
 	touch $@

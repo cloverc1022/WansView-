@@ -45,7 +45,7 @@ sout_LTLIBRARIES = \
 	libstream_out_transcode_plugin.la
 
 # RTP plugin
-sout_LTLIBRARIES += libstream_out_rtp_plugin.la
+#sout_LTLIBRARIES += libstream_out_rtp_plugin.la
 libstream_out_rtp_plugin_la_SOURCES = \
 	stream_out/rtp.c stream_out/rtp.h stream_out/rtpfmt.c \
 	stream_out/rtcp.c stream_out/rtsp.c stream_out/vod.c

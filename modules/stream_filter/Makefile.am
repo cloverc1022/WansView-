@@ -12,7 +12,7 @@ libdecomp_plugin_la_SOURCES = stream_filter/decomp.c
 libdecomp_plugin_la_LIBADD = $(LIBPTHREAD)
 if !HAVE_WIN32
 if !HAVE_TVOS
-stream_filter_LTLIBRARIES += libdecomp_plugin.la
+#stream_filter_LTLIBRARIES += libdecomp_plugin.la
 endif
 endif
 

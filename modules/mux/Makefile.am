@@ -30,7 +30,7 @@ libmux_ogg_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) $(OGG_CFLAGS)
 libmux_ogg_plugin_la_LDFLAGS = $(AM_LDFLAGS) -rpath '$(muxdir)'
 libmux_ogg_plugin_la_LIBADD = $(OGG_LIBS)
 EXTRA_LTLIBRARIES += libmux_ogg_plugin.la
-mux_LTLIBRARIES += $(LTLIBmux_ogg)
+#mux_LTLIBRARIES += $(LTLIBmux_ogg)
 
 libmux_ts_plugin_la_SOURCES = \
 	mux/mpeg/pes.c mux/mpeg/pes.h \
@@ -43,5 +43,5 @@ libmux_ts_plugin_la_SOURCES = \
 libmux_ts_plugin_la_CPPFLAGS = $(AM_CPPFLAGS) $(DVBPSI_CFLAGS)
 libmux_ts_plugin_la_LIBADD = $(DVBPSI_LIBS)
 if HAVE_DVBPSI
-mux_LTLIBRARIES += libmux_ts_plugin.la
+#mux_LTLIBRARIES += libmux_ts_plugin.la
 endif
