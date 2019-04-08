@@ -745,6 +745,7 @@ static const StreamType REGD_types[] = {
     { MKTAG('D', 'T', 'S', '1'), AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_DTS   },
     { MKTAG('D', 'T', 'S', '2'), AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_DTS   },
     { MKTAG('D', 'T', 'S', '3'), AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_DTS   },
+    { MKTAG('A', 'L', 'A', 'W'), AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_PCM_ALAW },
     { MKTAG('E', 'A', 'C', '3'), AVMEDIA_TYPE_AUDIO, AV_CODEC_ID_EAC3  },
     { MKTAG('H', 'E', 'V', 'C'), AVMEDIA_TYPE_VIDEO, AV_CODEC_ID_HEVC  },
     { MKTAG('K', 'L', 'V', 'A'), AVMEDIA_TYPE_DATA,  AV_CODEC_ID_SMPTE_KLV },
@@ -764,6 +765,7 @@ static const StreamType METADATA_types[] = {
 static const StreamType DESC_types[] = {
     { 0x6a, AVMEDIA_TYPE_AUDIO,    AV_CODEC_ID_AC3          }, /* AC-3 descriptor */
     { 0x7a, AVMEDIA_TYPE_AUDIO,    AV_CODEC_ID_EAC3         }, /* E-AC-3 descriptor */
+    { 0x06, AVMEDIA_TYPE_AUDIO,    AV_CODEC_ID_PCM_ALAW     },
     { 0x7b, AVMEDIA_TYPE_AUDIO,    AV_CODEC_ID_DTS          },
     { 0x56, AVMEDIA_TYPE_SUBTITLE, AV_CODEC_ID_DVB_TELETEXT },
     { 0x59, AVMEDIA_TYPE_SUBTITLE, AV_CODEC_ID_DVB_SUBTITLE }, /* subtitling descriptor */
@@ -1850,6 +1852,11 @@ int ff_parse_mpeg2_descriptor(AVFormatContext *fc, AVStream *st, int stream_type
             mpegts_find_stream_type(st, st->codecpar->codec_tag, REGD_types);
             if (st->codecpar->codec_tag == MKTAG('B', 'S', 'S', 'D'))
                 st->request_probe = 50;
+            if(st->codecpar->codec_tag == MKTAG('A', 'L', 'A', 'W'))
+            {
+                st->codecpar->channels = 1;
+                st->codecpar->sample_rate = 8000;
+            }
         }
         break;
     case 0x52: /* stream identifier descriptor */

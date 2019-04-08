@@ -1,0 +1,6 @@
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/doc/README
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/doc/LICENCE
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/doc/NEWS
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/pkgconfig/soxr.pc
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/lib/libsoxr.a
+/home/mamengchao/vlc/vlc-3.0/contrib/i686-w64-mingw32/include/soxr.h

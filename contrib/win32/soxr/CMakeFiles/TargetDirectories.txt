@@ -1,0 +1,15 @@
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/CMakeFiles/install.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/CMakeFiles/list_install_components.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/CMakeFiles/rebuild_cache.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/CMakeFiles/check.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/CMakeFiles/edit_cache.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/CMakeFiles/deinstall.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/CMakeFiles/install/strip.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/CMakeFiles/install/local.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/src/CMakeFiles/install.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/src/CMakeFiles/list_install_components.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/src/CMakeFiles/rebuild_cache.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/src/CMakeFiles/soxr.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/src/CMakeFiles/install/strip.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/src/CMakeFiles/install/local.dir
+/home/mamengchao/vlc/vlc-3.0/contrib/win32/soxr/src/CMakeFiles/edit_cache.dir

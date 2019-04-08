@@ -1191,12 +1191,12 @@ int av_interleaved_write_frame(AVFormatContext *s, AVPacket *pkt)
         if (s->debug & FF_FDEBUG_TS)
             av_log(s, AV_LOG_TRACE, "av_interleaved_write_frame size:%d dts:%s pts:%s\n",
                 pkt->size, av_ts2str(pkt->dts), av_ts2str(pkt->pts));
-
+#if 0 /*lgs: 屏蔽对于PTS以及 dts的计算*/
 #if FF_API_COMPUTE_PKT_FIELDS2 && FF_API_LAVF_AVCTX
         if ((ret = compute_muxer_pkt_fields(s, st, pkt)) < 0 && !(s->oformat->flags & AVFMT_NOTIMESTAMPS))
             goto fail;
 #endif
-
+#endif
         if (pkt->dts == AV_NOPTS_VALUE && !(s->oformat->flags & AVFMT_NOTIMESTAMPS)) {
             ret = AVERROR(EINVAL);
             goto fail;
