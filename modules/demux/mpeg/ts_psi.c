@@ -1068,6 +1068,13 @@ static void PMTSetupEs0x06( demux_t *p_demux, ts_stream_t *p_pes,
     {
         es_format_Change( p_fmt, VIDEO_ES, VLC_CODEC_HEVC );
     }
+    else if( PMTEsHasRegistration( p_demux, p_dvbpsies, "ALAW" ) )
+    {
+        es_format_Change( p_fmt, AUDIO_ES, VLC_CODEC_ALAW );
+        p_fmt->audio.i_channels         = 1;
+        p_fmt->audio.i_rate             = 8000;
+        p_fmt->audio.i_bitspersample    = 8;
+    }
     else if ( p_demux->p_sys->standard == TS_STANDARD_ARIB )
     {
         /* Lookup our data component descriptor first ARIB STD B10 6.4 */
