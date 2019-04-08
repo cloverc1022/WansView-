@@ -33,10 +33,8 @@ FFMPEGCONF = \
 	--disable-avfilter \
 	--disable-filters \
 	--disable-protocol=concat \
-	--disable-bsfs \
 	--disable-bzlib \
 	--disable-libvpx \
-	--disable-avresample \
 	--enable-bsf=vp9_superframe
 
 ifdef USE_FFMPEG
@@ -68,8 +66,8 @@ endif
 ifdef BUILD_ENCODERS
 FFMPEGCONF += --enable-libmp3lame
 DEPS_ffmpeg += lame $(DEPS_lame)
-else
-FFMPEGCONF += --disable-encoders
+#else
+#FFMPEGCONF += --disable-encoders
 endif
 
 # Small size
@@ -248,11 +246,15 @@ INDIVIDUAL_COMP_OPT=\
   --enable-encoder=aac  \
   --enable-decoder=aac  \
   --enable-decoder=h264 \
+  --enable-encoder=h264  \
   --enable-decoder=hevc \
   --enable-decoder=binkaudio_dct \
   --enable-decoder=binkaudio_rdft \
   --enable-decoder=adpcm_g726 \
   --enable-decoder=flv \
+  --enable-encoder=pcm_alaw \
+  --enable-decoder=pcm_alaw \
+  --enable-demuxer=mov \
   --enable-muxer=mpegts  \
   --enable-muxer=hls  \
   --enable-muxer=mp4  \
@@ -319,6 +321,7 @@ ifdef USE_FFMPEG
 	$(APPLY) $(SRC)/ffmpeg/armv7_fixup.patch
 	$(APPLY) $(SRC)/ffmpeg/dxva_vc1_crash.patch
 	$(APPLY) $(SRC)/ffmpeg/h264_early_SAR.patch
+	$(APPLY) $(SRC)/ffmpeg/anableAlaw.patch
 endif
 ifdef USE_LIBAV
 	$(APPLY) $(SRC)/ffmpeg/libav_gsm.patch
