@@ -2269,7 +2269,7 @@ static void TimeoutPrevention( void *p_data )
     demux_t *p_demux = (demux_t *) p_data;
     demux_sys_t *p_sys = p_demux->p_sys;
     char *bye = NULL;
-
+#if 0  /*resolve play rtsp interrupt*/
     if( var_GetBool( p_demux, "rtsp-tcp" ) )
         return;
 
@@ -2306,6 +2306,9 @@ static void TimeoutPrevention( void *p_data )
                  p_sys->env->getResultMsg() );
         /* Just continue, worst case is we get timed out later */
     }
+#else
+    return;
+#endif
 }
 
 /*****************************************************************************

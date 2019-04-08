@@ -299,7 +299,10 @@ static const muxer_properties_t p_muxers[] = {
                                 VLC_CODEC_WMV1, VLC_CODEC_WMV2, VLC_CODEC_WMV3, VLC_CODEC_VC1 ),
 
     M( "mp4", "mp4", INT_MAX,   VLC_CODEC_MP4A, VLC_CODEC_H264, VLC_CODEC_MP4V, VLC_CODEC_HEVC,
-                                VLC_CODEC_SUBT ),
+                                    VLC_CODEC_SUBT),
+
+    M( "mov", "mov", INT_MAX,   VLC_CODEC_MP4A, VLC_CODEC_H264, VLC_CODEC_MP4V, VLC_CODEC_HEVC,
+                                VLC_CODEC_SUBT, VLC_CODEC_ALAW),
 
     M( "ps", "mpg", 16/* FIXME*/,VLC_CODEC_MPGV,
                                 VLC_CODEC_MPGA, VLC_CODEC_DVD_LPCM, VLC_CODEC_A52,
@@ -457,7 +460,7 @@ static void OutputStart( sout_stream_t *p_stream )
         static const char ppsz_muxers[][2][4] = {
             { "avi", "avi" }, { "mp4", "mp4" }, { "ogg", "ogg" },
             { "asf", "asf" }, {  "ts",  "ts" }, {  "ps", "mpg" },
-            { "mkv", "mkv" },
+            { "mkv", "mkv" }, { "avformat{mux=mov}", "mov" },
 #if 0
             // XXX ffmpeg sefault really easily if you try an unsupported codec
             // mov and avi at least segfault
