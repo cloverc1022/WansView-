@@ -328,19 +328,37 @@ Boolean RTPInterface::sendRTPorRTCPPacketOverTCP(u_int8_t* packet, unsigned pack
     framingHeader[1] = streamChannelId;
     framingHeader[2] = (u_int8_t) ((packetSize&0xFF00)>>8);
     framingHeader[3] = (u_int8_t) (packetSize&0xFF);
-    if (!sendDataOverTCP(socketNum, framingHeader, 4, False)) break;
-
-    if (!sendDataOverTCP(socketNum, packet, packetSize, True)) break;
+	  unsigned char *pBuf = NULL;
+      pBuf = (unsigned char *)malloc(packetSize+4);
+      pBuf[0] = framingHeader[0];
+      pBuf[1] = framingHeader[1];
+      pBuf[2] = framingHeader[2];
+      pBuf[3] = framingHeader[3];
+      
+      
+      memcpy(pBuf+4, packet, packetSize);
+      
+      
+      /*for (int i =0; i< packetSize +4; i++) {
+          
+          fprintf(stderr,"%02x ",pBuf[i]);
+      }
+      fprintf(stderr,"\nWANS ==>  \n");
+      
+      fprintf(stderr, "sendRTPorRTCPPacketOverTCP:puf conetnt===>"); fflush(stderr);*/
+      
+      if (!sendDataOverTCP(socketNum, pBuf, packetSize + 4, True)) break;
 #ifdef DEBUG_SEND
     fprintf(stderr, "sendRTPorRTCPPacketOverTCP: completed\n"); fflush(stderr);
 #endif
-
+    free(pBuf);
     return True;
   } while (0);
 
 #ifdef DEBUG_SEND
   fprintf(stderr, "sendRTPorRTCPPacketOverTCP: failed! (errno %d)\n", envir().getErrno()); fflush(stderr);
 #endif
+//  free(pBuf);
   return False;
 }
 

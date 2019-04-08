@@ -120,35 +120,3 @@ char* base64Encode(char const* origSigned, unsigned origLength) {
   result[numResultBytes] = '\0';
   return result;
 }
-
-void simpleEncode(unsigned char * origSigned, int origLength, char key) {
-
-    if ((origSigned == NULL) ||(origLength <= 0))
-        return ;
-    
-    int i;
-    char ckey = key;
-    
-    for(i=0;i<origLength;i++)
-    {
-        *(origSigned + i) ^= ckey;
-    }
-    
-    return ;
-}
-
-void simpleDecode(unsigned char * origSigned, int origLength, char key) {
-
-    if ((origSigned == NULL) ||(origLength <= 0))
-        return ;
-    
-    int i;
-    char ckey = key;
-    
-    for(i=0;i<origLength;i++)
-    {
-        *(origSigned + i) ^= ckey;
-    }
-    
-    return ;
-}

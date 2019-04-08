@@ -1,16 +1,7 @@
-diff -Nur a/groupsock/GroupsockHelper.cpp b/groupsock/GroupsockHelper.cpp
---- a/groupsock/GroupsockHelper.cpp	2017-12-29 08:47:53.943126300 +0800
-+++ b/groupsock/GroupsockHelper.cpp	2017-12-29 09:18:57.702833800 +0800
-@@ -40,6 +41,8 @@
- # define MSG_NOSIGNAL 0
- #endif
- 
-+#include "Base64.hh"
-+
- // By default, use INADDR_ANY for the sending and receiving interfaces:
- netAddressBits SendingInterfaceAddr = INADDR_ANY;
- netAddressBits ReceivingInterfaceAddr = INADDR_ANY;
-@@ -174,6 +177,20 @@
+diff -Nur a/groupsock/GroupsockHelper.cpp c/groupsock/GroupsockHelper.cpp
+--- a/groupsock/GroupsockHelper.cpp	2019-02-14 10:15:51.576511413 +0800
++++ c/groupsock/GroupsockHelper.cpp	2019-02-14 10:29:37.565525344 +0800
+@@ -174,6 +175,20 @@
      }
    }
  
@@ -31,7 +22,7 @@ diff -Nur a/groupsock/GroupsockHelper.cpp b/groupsock/GroupsockHelper.cpp
    return newSocket;
  }
  
-@@ -281,6 +298,19 @@
+@@ -281,6 +296,19 @@
        return -1;
      }
    }
@@ -51,71 +42,9 @@ diff -Nur a/groupsock/GroupsockHelper.cpp b/groupsock/GroupsockHelper.cpp
  
    return newSocket;
  }
-@@ -318,6 +348,11 @@
-     return -1;
-   }
- 
-+  if(env.simpleEncrypt)
-+  {
-+    simpleDecode((unsigned char*)buffer, bytesRead, env.simpleEncrypt->encrypt_val);
-+  }
-+
-   return bytesRead;
- }
- 
-diff -Nur a/liveMedia/Base64.cpp b/liveMedia/Base64.cpp
---- a/liveMedia/Base64.cpp	2016-11-29 05:42:18.000000000 +0800
-+++ b/liveMedia/Base64.cpp	2017-12-29 09:19:16.638727200 +0800
-@@ -120,3 +120,35 @@
-   result[numResultBytes] = '\0';
-   return result;
- }
-+
-+void simpleEncode(unsigned char * origSigned, int origLength, char key) {
-+
-+    if ((origSigned == NULL) ||(origLength <= 0))
-+        return ;
-+    
-+    int i;
-+    char ckey = key;
-+    
-+    for(i=0;i<origLength;i++)
-+    {
-+        *(origSigned + i) ^= ckey;
-+    }
-+    
-+    return ;
-+}
-+
-+void simpleDecode(unsigned char * origSigned, int origLength, char key) {
-+
-+    if ((origSigned == NULL) ||(origLength <= 0))
-+        return ;
-+    
-+    int i;
-+    char ckey = key;
-+    
-+    for(i=0;i<origLength;i++)
-+    {
-+        *(origSigned + i) ^= ckey;
-+    }
-+    
-+    return ;
-+}
-diff -Nur a/liveMedia/include/Base64.hh b/liveMedia/include/Base64.hh
---- a/liveMedia/include/Base64.hh	2016-11-29 05:42:18.000000000 +0800
-+++ b/liveMedia/include/Base64.hh	2017-12-29 09:19:32.628326000 +0800
-@@ -40,4 +40,7 @@
-     // returns a 0-terminated string that
-     // the caller is responsible for delete[]ing.
- 
-+void simpleEncode(unsigned char * origSigned, int origLength, char key);
-+void simpleDecode(unsigned char * origSigned, int origLength, char key);
-+
- #endif
-diff -Nur a/liveMedia/include/RTSPClient.hh b/liveMedia/include/RTSPClient.hh
---- a/liveMedia/include/RTSPClient.hh	2017-12-29 08:47:53.967126300 +0800
-+++ b/liveMedia/include/RTSPClient.hh	2017-12-29 09:06:43.664437300 +0800
+diff -Nur a/liveMedia/include/RTSPClient.hh c/liveMedia/include/RTSPClient.hh
+--- a/liveMedia/include/RTSPClient.hh	2019-02-14 10:15:51.576511413 +0800
++++ c/liveMedia/include/RTSPClient.hh	2019-02-14 10:29:37.561525340 +0800
 @@ -144,6 +144,12 @@
        // Issues an aggregate RTSP "SET_PARAMETER" command on "session", then returns the "CSeq" sequence number that was used in the command.
        // (The "responseHandler" and "authenticator" parameters are as described for "sendDescribeCommand".)
@@ -142,9 +71,9 @@ diff -Nur a/liveMedia/include/RTSPClient.hh b/liveMedia/include/RTSPClient.hh
    // The state of a request-in-progress:
    class RequestRecord {
    public:
-diff -Nur a/liveMedia/MediaSession.cpp b/liveMedia/MediaSession.cpp
---- a/liveMedia/MediaSession.cpp	2016-11-29 05:42:18.000000000 +0800
-+++ b/liveMedia/MediaSession.cpp	2017-12-29 09:08:01.493219400 +0800
+diff -Nur a/liveMedia/MediaSession.cpp c/liveMedia/MediaSession.cpp
+--- a/liveMedia/MediaSession.cpp	2019-02-14 10:15:51.560511387 +0800
++++ c/liveMedia/MediaSession.cpp	2019-02-14 10:29:37.549525328 +0800
 @@ -692,7 +692,7 @@
        // The sockets' port numbers were specified for us.  Use these:
        Boolean const protocolIsRTP = strcmp(fProtocolName, "RTP") == 0;
@@ -164,39 +93,74 @@ diff -Nur a/liveMedia/MediaSession.cpp b/liveMedia/MediaSession.cpp
  	  if (isSSM()) {
  	    fRTCPSocket = new Groupsock(env(), tempAddr, fSourceFilterAddr, rtcpPortNum);
  	  } else {
-diff -Nur a/liveMedia/RTCP.cpp b/liveMedia/RTCP.cpp
---- a/liveMedia/RTCP.cpp	2016-11-29 05:42:18.000000000 +0800
-+++ b/liveMedia/RTCP.cpp	2017-12-29 09:25:34.877547300 +0800
-@@ -1098,7 +1098,17 @@
-   // Begin by figuring out the size of the entire SDES report:
-   unsigned numBytes = 4;
-       // counts the SSRC, but not the header; it'll get subtracted out
--  numBytes += fCNAME.totalSize(); // includes id and length
-+   // add homecare desc
-+  // ". ZTE SmartHome - XiaoXingKanKan"
-+  unsigned char const hcDes[32] = 
-+                       { 0x2e, 0x20, 0x5a, 0x54, 0x45, 0x20, 0x53, 
-+                         0x6d, 0x61, 0x72, 0x74, 0x48, 0x6f, 0x6d, 
-+                         0x65, 0x20, 0x2d, 0x20, 0x58, 0x69, 0x61, 
-+                         0x6f, 0x58, 0x69, 0x6e, 0x67, 0x4b, 0x61, 
-+                         0x6e, 0x4b, 0x61, 0x6e };
-+  unsigned slen = 32;
-+  unsigned DESTotalSize = fCNAME.totalSize() + slen;
-+  numBytes += DESTotalSize; // includes id and length
-   numBytes += 1; // the special END item
+diff -Nur a/liveMedia/RTCP.cpp c/liveMedia/RTCP.cpp
+--- a/liveMedia/RTCP.cpp	2019-02-14 10:15:51.560511387 +0800
++++ c/liveMedia/RTCP.cpp	2019-02-14 10:29:37.549525328 +0800
+@@ -349,7 +349,7 @@
+   char nameBytes[4];
+   nameBytes[0] = nameBytes[1] = nameBytes[2] = nameBytes[3] = '\0'; // by default
+   if (name != NULL) {
+-    snprintf(nameBytes, 4, "%s", name);
++    strncpy(nameBytes, name, 4);
+   }
+   fOutBuf->enqueue((u_int8_t*)nameBytes, 4);
  
-   unsigned num4ByteWords = (numBytes + 3)/4;
-@@ -1116,6 +1126,7 @@
+@@ -645,7 +645,6 @@
+ #endif
+ 	    break;
+ 	  }
+-	  length -= 4;
+ #ifdef DEBUG
+ 	  fprintf(stderr, "\tname:%c%c%c%c\n", pkt[0], pkt[1], pkt[2], pkt[3]);
+ #endif
+diff -Nur a/liveMedia/RTPInterface.cpp c/liveMedia/RTPInterface.cpp
+--- a/liveMedia/RTPInterface.cpp	2019-02-14 10:15:51.564511393 +0800
++++ c/liveMedia/RTPInterface.cpp	2019-02-14 10:31:29.525816153 +0800
+@@ -328,19 +328,37 @@
+     framingHeader[1] = streamChannelId;
+     framingHeader[2] = (u_int8_t) ((packetSize&0xFF00)>>8);
+     framingHeader[3] = (u_int8_t) (packetSize&0xFF);
+-    if (!sendDataOverTCP(socketNum, framingHeader, 4, False)) break;
+-
+-    if (!sendDataOverTCP(socketNum, packet, packetSize, True)) break;
++	  unsigned char *pBuf = NULL;
++      pBuf = (unsigned char *)malloc(packetSize+4);
++      pBuf[0] = framingHeader[0];
++      pBuf[1] = framingHeader[1];
++      pBuf[2] = framingHeader[2];
++      pBuf[3] = framingHeader[3];
++      
++      
++      memcpy(pBuf+4, packet, packetSize);
++      
++      
++      /*for (int i =0; i< packetSize +4; i++) {
++          
++          fprintf(stderr,"%02x ",pBuf[i]);
++      }
++      fprintf(stderr,"\nWANS ==>  \n");
++      
++      fprintf(stderr, "sendRTPorRTCPPacketOverTCP:puf conetnt===>"); fflush(stderr);*/
++      
++      if (!sendDataOverTCP(socketNum, pBuf, packetSize + 4, True)) break;
+ #ifdef DEBUG_SEND
+     fprintf(stderr, "sendRTPorRTCPPacketOverTCP: completed\n"); fflush(stderr);
+ #endif
+-
++    free(pBuf);
+     return True;
+   } while (0);
  
-   // Add the CNAME:
-   fOutBuf->enqueue(fCNAME.data(), fCNAME.totalSize());
-+  fOutBuf->enqueue(hcDes, slen); // add homecare desc
+ #ifdef DEBUG_SEND
+   fprintf(stderr, "sendRTPorRTCPPacketOverTCP: failed! (errno %d)\n", envir().getErrno()); fflush(stderr);
+ #endif
++//  free(pBuf);
+   return False;
+ }
  
-   // Add the 'END' item (i.e., a zero byte), plus any more needed to pad:
-   unsigned numPaddingBytesNeeded = 4 - (fOutBuf->curPacketSize() % 4);
-diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
---- a/liveMedia/RTSPClient.cpp	2017-12-29 08:47:53.967126300 +0800
-+++ b/liveMedia/RTSPClient.cpp	2017-12-29 09:21:54.247486500 +0800
+diff -Nur a/liveMedia/RTSPClient.cpp c/liveMedia/RTSPClient.cpp
+--- a/liveMedia/RTSPClient.cpp	2019-02-14 10:15:51.560511387 +0800
++++ c/liveMedia/RTSPClient.cpp	2019-02-14 10:29:37.529525308 +0800
 @@ -140,6 +140,19 @@
    return result;
  }
@@ -217,7 +181,7 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
  unsigned RTSPClient::sendGetParameterCommand(MediaSession& session, responseHandler* responseHandler, char const* parameterName,
                                               Authenticator* authenticator) {
    if (fCurrentAuthenticator < authenticator) fCurrentAuthenticator = *authenticator;
-@@ -198,6 +211,21 @@
+@@ -198,6 +211,15 @@
    }
  }
  
@@ -227,19 +191,13 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
 +    {
 +        return -1;
 +    }
-+
-+    if(envir().simpleEncrypt)
-+    {
-+        simpleEncode((unsigned char *)audioBuf, bufSize, envir().simpleEncrypt->encrypt_val);
-+    }
-+
 +    return send(fOutputSocketNum, audioBuf, bufSize, 0);
 +}
 +
  Boolean RTSPClient::changeResponseHandler(unsigned cseq, responseHandler* newResponseHandler) { 
    // Look for the matching request record in each of our 'pending requests' queues:
    RequestRecord* request;
-@@ -361,7 +389,7 @@
+@@ -361,7 +383,7 @@
  RTSPClient::RTSPClient(UsageEnvironment& env, char const* rtspURL,
  		       int verbosityLevel, char const* applicationName,
  		       portNumBits tunnelOverHTTPPortNum, int socketNumToServer)
@@ -248,7 +206,7 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
      desiredMaxIncomingPacketSize(0), fVerbosityLevel(verbosityLevel), fCSeq(1),
      fAllowBasicAuthentication(True), fServerAddress(0),
      fTunnelOverHTTPPortNum(tunnelOverHTTPPortNum),
-@@ -470,6 +498,13 @@
+@@ -470,6 +492,13 @@
      // First, construct command-specific headers that we need:
  
      char* cmdURL = fBaseURL; // by default
@@ -262,7 +220,7 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
      Boolean cmdURLWasAllocated = False;
  
      char const* protocolStr = "RTSP/1.0"; // by default
-@@ -543,8 +578,13 @@
+@@ -543,8 +572,9 @@
        if (fVerbosityLevel >= 1) envir() << "\tThe request was base-64 encoded to: " << cmd << "\n\n";
        delete[] origCmd;
      }
@@ -270,15 +228,11 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
 -    if (send(fOutputSocketNum, cmd, strlen(cmd), MSG_NOSIGNAL) < 0) {
 +    
 +    int sendlen = (int)strlen(cmd);
-+    if(envir().simpleEncrypt)
-+    {
-+      simpleEncode((unsigned char *)cmd, sendlen, envir().simpleEncrypt->encrypt_val);
-+    }
 +    if (send(fOutputSocketNum, cmd, sendlen, MSG_NOSIGNAL) < 0) {
        char const* errFmt = "%s send() failed: ";
        unsigned const errLength = strlen(errFmt) + strlen(request->commandName());
        char* err = new char[errLength];
-@@ -688,6 +728,8 @@
+@@ -688,6 +718,8 @@
      // Note: I think the above is nonstandard, but DSS wants it this way
      char const* portTypeStr;
      portNumBits rtpNumber, rtcpNumber;
@@ -287,7 +241,7 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
      if (streamUsingTCP) { // streaming over the RTSP connection
        transportTypeStr = "/TCP;unicast";
        portTypeStr = ";interleaved";
-@@ -699,7 +741,17 @@
+@@ -699,7 +731,17 @@
  	= IsMulticastAddress(connectionAddress) || (connectionAddress == 0 && forceMulticastOnUnspecified);
        transportTypeStr = requestMulticastStreaming ? ";multicast" : ";unicast";
        portTypeStr = requestMulticastStreaming ? ";port" : ";client_port";
@@ -306,7 +260,7 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
        if (rtpNumber == 0) {
  	envir().setResultMsg("Client port number unknown\n");
  	delete[] cmdURL;
-@@ -707,11 +759,23 @@
+@@ -707,11 +749,23 @@
        }
        rtcpNumber = subsession.rtcpIsMuxed() ? rtpNumber : rtpNumber + 1;
      }
@@ -335,14 +289,24 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
      
      // When sending more than one "SETUP" request, include a "Session:" header in the 2nd and later commands:
      char* sessionStr = createSessionString(fLastSessionId);
-@@ -786,7 +850,10 @@
+@@ -786,7 +840,20 @@
  	      serverAddressString.val(),
  	      fSessionCookie);
      }
 -  } else { // "PLAY", "PAUSE", "TEARDOWN", "RECORD", "SET_PARAMETER", "GET_PARAMETER"
 +  } else if (strcmp(request->commandName(), "GET_PARAMETER") == 0 
 +   || strcmp(request->commandName(), "SET_PARAMETER") == 0){
-+     extraHeaders = (char*)"Content-Type: text/plain\r\n";   
++      char const* sessionId;
++      if (request->session() != NULL) {
++            sessionId = fLastSessionId;
++      } else {
++            sessionId = request->subsession()->sessionId();
++      }
++      char const* const content_type = "Content-Type: text/plain\r\n";
++      char* sessionStr = createSessionString(sessionId);
++      extraHeaders = new char[strlen(sessionStr) + strlen(content_type)  + 1];
++      extraHeadersWereAllocated = True;
++      sprintf(extraHeaders, "%s%s", sessionStr, content_type);  
 +   } else { // "PLAY", "PAUSE", "TEARDOWN", "RECORD", "SET_PARAMETER", "GET_PARAMETER"
      // First, make sure that we have a RTSP session in progress
      if (fLastSessionId == NULL) {
@@ -424,41 +388,4 @@ diff -Nur a/liveMedia/RTSPClient.cpp b/liveMedia/RTSPClient.cpp
      if (fInputSocketNum < 0) break;
      ignoreSigPipeOnSocket(fInputSocketNum); // so that servers on the same host that get killed don't also kill us
      if (fOutputSocketNum < 0) fOutputSocketNum = fInputSocketNum;
-diff -Nur a/UsageEnvironment/include/UsageEnvironment.hh b/UsageEnvironment/include/UsageEnvironment.hh
---- a/UsageEnvironment/include/UsageEnvironment.hh	2016-11-29 05:42:19.000000000 +0800
-+++ b/UsageEnvironment/include/UsageEnvironment.hh	2017-12-29 09:22:43.246385900 +0800
-@@ -48,6 +48,13 @@
- 
- class TaskScheduler; // forward
- 
-+struct _simpleEncrypt
-+{
-+    int encrypt_mode;
-+    char encrypt_val;
-+    void *priv;
-+};
-+
- // An abstract base class, subclassed for each use of the library
- 
- class UsageEnvironment {
-@@ -90,6 +97,8 @@
-   void* liveMediaPriv;
-   void* groupsockPriv;
- 
-+  struct _simpleEncrypt *simpleEncrypt;
-+  
- protected:
-   UsageEnvironment(TaskScheduler& scheduler); // abstract base class
-   virtual ~UsageEnvironment(); // we are deleted only by reclaim()
-diff -Nur a/UsageEnvironment/UsageEnvironment.cpp b/UsageEnvironment/UsageEnvironment.cpp
---- a/UsageEnvironment/UsageEnvironment.cpp	2016-11-29 05:42:19.000000000 +0800
-+++ b/UsageEnvironment/UsageEnvironment.cpp	2017-12-29 09:23:21.701231000 +0800
-@@ -30,7 +30,7 @@
- }
- 
- UsageEnvironment::UsageEnvironment(TaskScheduler& scheduler)
--  : liveMediaPriv(NULL), groupsockPriv(NULL), fScheduler(scheduler) {
-+  : liveMediaPriv(NULL), groupsockPriv(NULL), simpleEncrypt(NULL), fScheduler(scheduler) {
- }
- 
- UsageEnvironment::~UsageEnvironment() {
+

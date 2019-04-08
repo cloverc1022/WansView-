@@ -217,12 +217,6 @@ int RTSPClient::sendBidAudio(char *audioBuf, int bufSize)
     {
         return -1;
     }
-
-    if(envir().simpleEncrypt)
-    {
-        simpleEncode((unsigned char *)audioBuf, bufSize, envir().simpleEncrypt->encrypt_val);
-    }
-
     return send(fOutputSocketNum, audioBuf, bufSize, 0);
 }
 
@@ -580,10 +574,6 @@ unsigned RTSPClient::sendRequest(RequestRecord* request) {
     }
     
     int sendlen = (int)strlen(cmd);
-    if(envir().simpleEncrypt)
-    {
-      simpleEncode((unsigned char *)cmd, sendlen, envir().simpleEncrypt->encrypt_val);
-    }
     if (send(fOutputSocketNum, cmd, sendlen, MSG_NOSIGNAL) < 0) {
       char const* errFmt = "%s send() failed: ";
       unsigned const errLength = strlen(errFmt) + strlen(request->commandName());
@@ -852,7 +842,17 @@ Boolean RTSPClient::setRequestFields(RequestRecord* request,
     }
   } else if (strcmp(request->commandName(), "GET_PARAMETER") == 0 
    || strcmp(request->commandName(), "SET_PARAMETER") == 0){
-     extraHeaders = (char*)"Content-Type: text/plain\r\n";   
+      char const* sessionId;
+      if (request->session() != NULL) {
+            sessionId = fLastSessionId;
+      } else {
+            sessionId = request->subsession()->sessionId();
+      }
+      char const* const content_type = "Content-Type: text/plain\r\n";
+      char* sessionStr = createSessionString(sessionId);
+      extraHeaders = new char[strlen(sessionStr) + strlen(content_type)  + 1];
+      extraHeadersWereAllocated = True;
+      sprintf(extraHeaders, "%s%s", sessionStr, content_type);  
    } else { // "PLAY", "PAUSE", "TEARDOWN", "RECORD", "SET_PARAMETER", "GET_PARAMETER"
     // First, make sure that we have a RTSP session in progress
     if (fLastSessionId == NULL) {

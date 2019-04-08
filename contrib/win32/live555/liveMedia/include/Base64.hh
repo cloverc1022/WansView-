@@ -40,7 +40,4 @@ char* base64Encode(char const* orig, unsigned origLength);
     // returns a 0-terminated string that
     // the caller is responsible for delete[]ing.
 
-void simpleEncode(unsigned char * origSigned, int origLength, char key);
-void simpleDecode(unsigned char * origSigned, int origLength, char key);
-
 #endif

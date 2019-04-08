@@ -40,8 +40,6 @@ extern "C" int initializeWinsockIfNecessary();
 # define MSG_NOSIGNAL 0
 #endif
 
-#include "Base64.hh"
-
 // By default, use INADDR_ANY for the sending and receiving interfaces:
 netAddressBits SendingInterfaceAddr = INADDR_ANY;
 netAddressBits ReceivingInterfaceAddr = INADDR_ANY;
@@ -345,11 +343,6 @@ int readSocket(UsageEnvironment& env,
   } else if (bytesRead == 0) {
     // "recvfrom()" on a stream socket can return 0 if the remote end has closed the connection.  Treat this as an error:
     return -1;
-  }
-
-  if(env.simpleEncrypt)
-  {
-    simpleDecode((unsigned char*)buffer, bytesRead, env.simpleEncrypt->encrypt_val);
   }
 
   return bytesRead;

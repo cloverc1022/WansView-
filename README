@@ -86,8 +86,8 @@ Configuring the build
 ./bootstrap
 mkdir win32
 cd win32
-export PKG_CONFIG_LIBDIR=$HOME/vlc/contrib/i686-w64-mingw32/lib/pkgconfig
-export CFLAGS="-O2"
+export PKG_CONFIG_LIBDIR=$HOME/vlc/contrib/i686-w64-mingw32/lib/pkgconfig   \
+export CFLAGS="-O2" \
 export CXXFLAGS="-O2"
 ../configure --host=i686-w64-mingw32 \
 	--disable-nls \

@@ -349,7 +349,7 @@ void RTCPInstance::sendAppPacket(u_int8_t subtype, char const* name,
   char nameBytes[4];
   nameBytes[0] = nameBytes[1] = nameBytes[2] = nameBytes[3] = '\0'; // by default
   if (name != NULL) {
-    snprintf(nameBytes, 4, "%s", name);
+    strncpy(nameBytes, name, 4);
   }
   fOutBuf->enqueue((u_int8_t*)nameBytes, 4);
 
@@ -645,7 +645,6 @@ void RTCPInstance
 #endif
 	    break;
 	  }
-	  length -= 4;
 #ifdef DEBUG
 	  fprintf(stderr, "\tname:%c%c%c%c\n", pkt[0], pkt[1], pkt[2], pkt[3]);
 #endif
@@ -1098,17 +1097,7 @@ void RTCPInstance::addSDES() {
   // Begin by figuring out the size of the entire SDES report:
   unsigned numBytes = 4;
       // counts the SSRC, but not the header; it'll get subtracted out
-   // add homecare desc
-  // ". ZTE SmartHome - XiaoXingKanKan"
-  unsigned char const hcDes[32] = 
-                       { 0x2e, 0x20, 0x5a, 0x54, 0x45, 0x20, 0x53, 
-                         0x6d, 0x61, 0x72, 0x74, 0x48, 0x6f, 0x6d, 
-                         0x65, 0x20, 0x2d, 0x20, 0x58, 0x69, 0x61, 
-                         0x6f, 0x58, 0x69, 0x6e, 0x67, 0x4b, 0x61, 
-                         0x6e, 0x4b, 0x61, 0x6e };
-  unsigned slen = 32;
-  unsigned DESTotalSize = fCNAME.totalSize() + slen;
-  numBytes += DESTotalSize; // includes id and length
+  numBytes += fCNAME.totalSize(); // includes id and length
   numBytes += 1; // the special END item
 
   unsigned num4ByteWords = (numBytes + 3)/4;
@@ -1126,7 +1115,6 @@ void RTCPInstance::addSDES() {
 
   // Add the CNAME:
   fOutBuf->enqueue(fCNAME.data(), fCNAME.totalSize());
-  fOutBuf->enqueue(hcDes, slen); // add homecare desc
 
   // Add the 'END' item (i.e., a zero byte), plus any more needed to pad:
   unsigned numPaddingBytesNeeded = 4 - (fOutBuf->curPacketSize() % 4);

@@ -318,7 +318,7 @@ skip_uninstall32_cleanup:
   !insertmacro InstallFolder plugins
   !insertmacro InstallFolderOptional locale
   !insertmacro InstallFolder hrtfs
-   !insertmacro InstallFolder skins
+#   !insertmacro InstallFolder skins
      !insertmacro InstallFolder lua
 
   ; Generate the cache and add it to uninstall.log
